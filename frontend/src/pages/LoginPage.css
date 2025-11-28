@@ -1,0 +1,11 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+}
+
+.main-content {
+  flex: 1;
+}
+

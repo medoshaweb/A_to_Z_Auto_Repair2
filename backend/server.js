@@ -17,8 +17,12 @@ initDatabase().catch(console.error);
 // Routes
 const authRoutes = require('./routes/auth');
 const customerRoutes = require('./routes/customers');
+const orderRoutes = require('./routes/orders');
+const serviceRoutes = require('./routes/services');
 app.use('/api/auth', authRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/services', serviceRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

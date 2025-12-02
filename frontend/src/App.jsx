@@ -10,6 +10,9 @@ import CustomersList from './pages/CustomersList';
 import AddCustomer from './pages/AddCustomer';
 import EditCustomer from './pages/EditCustomer';
 import CustomerDetail from './pages/CustomerDetail';
+import OrdersList from './pages/OrdersList';
+import NewOrder from './pages/NewOrder';
+import OrderDetail from './pages/OrderDetail';
 
 function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -88,6 +91,38 @@ function App() {
           element={
             <PrivateRoute>
               <EditCustomer />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/orders"
+          element={
+            <PrivateRoute>
+              <OrdersList />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/orders/new"
+          element={
+            <PrivateRoute>
+              <NewOrder />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/orders/:id"
+          element={
+            <PrivateRoute>
+              <OrderDetail />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/admin/orders/:id/edit"
+          element={
+            <PrivateRoute>
+              <OrderDetail />
             </PrivateRoute>
           }
         />

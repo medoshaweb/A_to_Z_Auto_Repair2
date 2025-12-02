@@ -1,10 +1,10 @@
-# ABE Garage - Full Stack Application
+# A_to_Z_Auto_Repair - Full Stack Application
 
-A full-stack web application for ABE Garage with React frontend and Node.js/Express backend with MySQL database.
+A full-stack web application for A_to_Z_Auto_Repair with React frontend and Node.js/Express backend with MySQL database.
 
 ## Features
 
-- Modern, responsive design matching the ABE Garage branding
+- Modern, responsive design matching the A_to_Z_Auto_Repair branding
 - User authentication (Login/Register)
 - Secure password hashing with bcrypt
 - JWT token-based authentication
@@ -91,7 +91,7 @@ PORT=5000
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=your_password
-DB_NAME=abe_garage
+DB_NAME=A_to_Z_Auto_Repair
 JWT_SECRET=your_jwt_secret_key_here
 ```
 

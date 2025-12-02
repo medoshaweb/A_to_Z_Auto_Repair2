@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # A_to_Z_Auto_Repair - Full Stack Application
 
 A full-stack web application for A_to_Z_Auto_Repair with React frontend and Node.js/Express backend with MySQL database.
@@ -5,6 +6,15 @@ A full-stack web application for A_to_Z_Auto_Repair with React frontend and Node
 ## Features
 
 - Modern, responsive design matching the A_to_Z_Auto_Repair branding
+=======
+# A to Z Auto Repair - Full Stack Application
+
+A full-stack web application for A to z Auto Repair with React frontend and Node.js/Express backend with MySQL database.
+
+## Features
+
+- Modern, responsive design matching the A to Z Auto Repair branding
+>>>>>>> 2f7ad10cf199033b9e09c76b0bdcbdfb1b4cf8aa
 - User authentication (Login/Register)
 - Secure password hashing with bcrypt
 - JWT token-based authentication
@@ -66,7 +76,7 @@ A full-stack web application for A_to_Z_Auto_Repair with React frontend and Node
 ### Prerequisites
 - Node.js (v14 or higher)
 - MySQL (v5.7 or higher)
-- npm or yarn
+- npm 
 
 ### Backend Setup
 

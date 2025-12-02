@@ -35,22 +35,13 @@ const Header = () => {
         <div className="nav-container">
           <div className="logo-section">
             <div className="logo-icon">
-              {/* <svg width="40" height="40" viewBox="0 0 40 40" fill="none"> */}
                 <img
-                  src="../../public/image/car_logo.png"
+                  src="/image/car_logo5.png"
                   alt="car_logo"
-                  width="100"
-                  height="60"
-                  // viewBox="0 0 80 80"
-                />
-                {/* <rect x="5" y="15" width="30" height="15" rx="2" fill="#DC143C"/>
-                <rect x="8" y="18" width="24" height="9" fill="#1E3A8A"/>
-                <circle cx="12" cy="28" r="3" fill="#1E3A8A"/>
-                <circle cx="28" cy="28" r="3" fill="#1E3A8A"/>
-                <rect x="15" y="10" width="10" height="8" rx="1" fill="#DC143C"/> */}
-              {/* </svg> */}
+                  width="300"
+                  height="70"
+               />
             </div>
-            <span className="logo-text">A to Z Auto Repair</span>
           </div>
           <div className="nav-links">
             <Link to="/" className="nav-link">

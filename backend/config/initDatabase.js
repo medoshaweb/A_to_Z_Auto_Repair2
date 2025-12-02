@@ -13,12 +13,12 @@ async function initDatabase() {
 
     // Create database if it doesn't exist
     await connection.query(
-      `CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || "abe_garage"}`
+      `CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || "A_to_Z_Auto_Repair"}`
     );
     console.log("Database created or already exists");
 
     // Switch to the database
-    await connection.query(`USE ${process.env.DB_NAME || "abe_garage"}`);
+    await connection.query(`USE ${process.env.DB_NAME || "A_to_Z_Auto_Repair"}`);
 
     // Create users table
     await connection.query(`

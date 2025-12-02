@@ -1,7 +1,7 @@
 {
-  "name": "abe-garage-backend",
+  "name": "a-to-z-auto-repair-backend",
   "version": "1.0.0",
-  "description": "Backend API for ABE Garage",
+  "description": "Backend API for A to Z Auto Repair",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -15,7 +15,7 @@ const Dashboard = () => {
             Dashboard
             <span className="title-underline"></span>
           </h1>
-          <p>Welcome to the ABE Garage Admin Dashboard</p>
+          <p>Welcome to the A_to_Z Auto Repair Admin Dashboard</p>
         </main>
       </div>
       <Footer />

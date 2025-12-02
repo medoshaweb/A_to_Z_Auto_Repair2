@@ -1,19 +1,19 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import './AdminSidebar.css';
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import "./AdminSidebar.css";
 
 const AdminSidebar = () => {
   const location = useLocation();
 
   const menuItems = [
-    { path: '/admin/dashboard', label: 'Dashboard' },
-    { path: '/admin/orders', label: 'Orders' },
-    { path: '/admin/orders/new', label: 'New order' },
-    { path: '/admin/employees/add', label: 'Add employee' },
-    { path: '/admin/employees', label: 'Employees' },
-    { path: '/admin/customers/add', label: 'Add customer' },
-    { path: '/admin/customers', label: 'Customers' },
-    { path: '/admin/services', label: 'Services' }
+    { path: "/admin/dashboard", label: "Dashboard" },
+    { path: "/admin/orders", label: "Orders" },
+    { path: "/admin/orders/new", label: "New order" },
+    { path: "/admin/employees/add", label: "Add employee" },
+    { path: "/admin/employees", label: "Employees" },
+    { path: "/admin/customers/add", label: "Add customer" },
+    { path: "/admin/customers", label: "Customers" },
+    { path: "/admin/services", label: "Services" },
   ];
 
   return (
@@ -24,7 +24,9 @@ const AdminSidebar = () => {
           <Link
             key={item.path}
             to={item.path}
-            className={`sidebar-link ${location.pathname === item.path ? 'active' : ''}`}
+            className={`sidebar-link ${
+              location.pathname === item.path ? "active" : ""
+            }`}
           >
             {item.label}
           </Link>
@@ -35,4 +37,3 @@ const AdminSidebar = () => {
 };
 
 export default AdminSidebar;
-

@@ -1,9 +1,10 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const pool = require('../config/database');
+const pool = require("../config/database");
+const authenticateCustomer = require("../middleware/customerAuth");
 
 // Get all orders with customer and vehicle info
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const [orders] = await pool.execute(`
       SELECT 
@@ -35,27 +36,31 @@ router.get('/', async (req, res) => {
 
     // Get services for each order
     for (const order of orders) {
-      const [services] = await pool.execute(`
+      const [services] = await pool.execute(
+        `
         SELECT s.id, s.name, s.description
         FROM services s
         INNER JOIN order_services os ON s.id = os.service_id
         WHERE os.order_id = ?
-      `, [order.id]);
+      `,
+        [order.id]
+      );
       order.services = services;
     }
 
     res.json({ orders });
   } catch (error) {
-    console.error('Get orders error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Get orders error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 // Get single order by ID
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const [orders] = await pool.execute(`
+    const [orders] = await pool.execute(
+      `
       SELECT 
         o.*,
         c.first_name,
@@ -74,47 +79,86 @@ router.get('/:id', async (req, res) => {
       LEFT JOIN customers c ON o.customer_id = c.id
       LEFT JOIN vehicles v ON o.vehicle_id = v.id
       WHERE o.id = ?
-    `, [id]);
+    `,
+      [id]
+    );
 
     if (orders.length === 0) {
-      return res.status(404).json({ message: 'Order not found' });
+      return res.status(404).json({ message: "Order not found" });
     }
 
     const order = orders[0];
 
     // Get services for this order
-    const [services] = await pool.execute(`
+    const [services] = await pool.execute(
+      `
       SELECT s.id, s.name, s.description
       FROM services s
       INNER JOIN order_services os ON s.id = os.service_id
       WHERE os.order_id = ?
-    `, [id]);
+    `,
+      [id]
+    );
     order.services = services;
 
     res.json({ order });
   } catch (error) {
-    console.error('Get order error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Get order error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-// Create new order
-router.post('/', async (req, res) => {
+// Create new order - NOW PROTECTED
+router.post("/", authenticateCustomer, async (req, res) => {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
 
-    const { customer_id, vehicle_id, description, price, service_ids, received_by } = req.body;
+    const {
+      customer_id,
+      vehicle_id,
+      description,
+      price,
+      service_ids,
+      received_by,
+    } = req.body;
 
-    if (!customer_id) {
-      return res.status(400).json({ message: 'Customer ID is required' });
+    // IMPORTANT: Verify customer_id matches authenticated customer
+    if (req.customer.id !== parseInt(customer_id)) {
+      await connection.rollback();
+      return res
+        .status(403)
+        .json({ message: "You can only create orders for yourself" });
+    }
+
+    // Verify vehicle belongs to customer (if vehicle_id is provided)
+    if (vehicle_id) {
+      const [vehicleCheck] = await connection.execute(
+        "SELECT customer_id FROM vehicles WHERE id = ?",
+        [vehicle_id]
+      );
+      if (
+        vehicleCheck.length === 0 ||
+        vehicleCheck[0].customer_id !== req.customer.id
+      ) {
+        await connection.rollback();
+        return res.status(403).json({
+          message: "This vehicle does not belong to you",
+        });
+      }
     }
 
     // Create the order
     const [result] = await connection.execute(
       `INSERT INTO orders (customer_id, vehicle_id, description, total_amount, received_by, status)
        VALUES (?, ?, ?, ?, ?, 'Received')`,
-      [customer_id, vehicle_id || null, description || null, price || 0, received_by || 'Admin']
+      [
+        req.customer.id, // Use authenticated customer ID
+        vehicle_id || null,
+        description || null,
+        price || 0,
+        received_by || "Customer",
+      ]
     );
 
     const orderId = result.insertId;
@@ -123,7 +167,7 @@ router.post('/', async (req, res) => {
     if (service_ids && Array.isArray(service_ids) && service_ids.length > 0) {
       for (const serviceId of service_ids) {
         await connection.execute(
-          'INSERT INTO order_services (order_id, service_id) VALUES (?, ?)',
+          "INSERT INTO order_services (order_id, service_id) VALUES (?, ?)",
           [orderId, serviceId]
         );
       }
@@ -132,7 +176,8 @@ router.post('/', async (req, res) => {
     await connection.commit();
 
     // Fetch the complete order
-    const [newOrder] = await connection.execute(`
+    const [newOrder] = await connection.execute(
+      `
       SELECT 
         o.*,
         c.first_name,
@@ -150,44 +195,60 @@ router.post('/', async (req, res) => {
       LEFT JOIN customers c ON o.customer_id = c.id
       LEFT JOIN vehicles v ON o.vehicle_id = v.id
       WHERE o.id = ?
-    `, [orderId]);
+    `,
+      [orderId]
+    );
 
     // Get services
-    const [services] = await connection.execute(`
+    const [services] = await connection.execute(
+      `
       SELECT s.id, s.name, s.description
       FROM services s
       INNER JOIN order_services os ON s.id = os.service_id
       WHERE os.order_id = ?
-    `, [orderId]);
+    `,
+      [orderId]
+    );
     newOrder[0].services = services;
 
     res.status(201).json({
-      message: 'Order created successfully',
-      order: newOrder[0]
+      message: "Order created successfully",
+      order: newOrder[0],
     });
   } catch (error) {
     await connection.rollback();
-    console.error('Create order error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Create order error:", error);
+    res.status(500).json({ message: "Server error" });
   } finally {
     connection.release();
   }
 });
 
 // Update order
-router.put('/:id', async (req, res) => {
+router.put("/:id", async (req, res) => {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
 
     const { id } = req.params;
-    const { customer_id, vehicle_id, description, price, service_ids, status, received_by } = req.body;
+    const {
+      customer_id,
+      vehicle_id,
+      description,
+      price,
+      service_ids,
+      status,
+      received_by,
+    } = req.body;
 
     // Check if order exists
-    const [existing] = await connection.execute('SELECT * FROM orders WHERE id = ?', [id]);
+    const [existing] = await connection.execute(
+      "SELECT * FROM orders WHERE id = ?",
+      [id]
+    );
     if (existing.length === 0) {
       await connection.rollback();
-      return res.status(404).json({ message: 'Order not found' });
+      return res.status(404).json({ message: "Order not found" });
     }
 
     // Update order
@@ -202,19 +263,22 @@ router.put('/:id', async (req, res) => {
         price !== undefined ? price : existing[0].total_amount,
         status || existing[0].status,
         received_by || existing[0].received_by,
-        id
+        id,
       ]
     );
 
     // Update services if provided
     if (service_ids && Array.isArray(service_ids)) {
       // Delete existing services
-      await connection.execute('DELETE FROM order_services WHERE order_id = ?', [id]);
-      
+      await connection.execute(
+        "DELETE FROM order_services WHERE order_id = ?",
+        [id]
+      );
+
       // Add new services
       for (const serviceId of service_ids) {
         await connection.execute(
-          'INSERT INTO order_services (order_id, service_id) VALUES (?, ?)',
+          "INSERT INTO order_services (order_id, service_id) VALUES (?, ?)",
           [id, serviceId]
         );
       }
@@ -223,7 +287,8 @@ router.put('/:id', async (req, res) => {
     await connection.commit();
 
     // Fetch updated order
-    const [updated] = await connection.execute(`
+    const [updated] = await connection.execute(
+      `
       SELECT 
         o.*,
         c.first_name,
@@ -241,29 +306,84 @@ router.put('/:id', async (req, res) => {
       LEFT JOIN customers c ON o.customer_id = c.id
       LEFT JOIN vehicles v ON o.vehicle_id = v.id
       WHERE o.id = ?
-    `, [id]);
+    `,
+      [id]
+    );
 
     // Get services
-    const [services] = await connection.execute(`
+    const [services] = await connection.execute(
+      `
       SELECT s.id, s.name, s.description
       FROM services s
       INNER JOIN order_services os ON s.id = os.service_id
       WHERE os.order_id = ?
-    `, [id]);
+    `,
+      [id]
+    );
     updated[0].services = services;
 
     res.json({
-      message: 'Order updated successfully',
-      order: updated[0]
+      message: "Order updated successfully",
+      order: updated[0],
     });
   } catch (error) {
     await connection.rollback();
-    console.error('Update order error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Update order error:", error);
+    res.status(500).json({ message: "Server error" });
   } finally {
     connection.release();
   }
 });
 
-module.exports = router;
+// Add service to order - NOW PROTECTED
+router.post("/:id/services", authenticateCustomer, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { service_id } = req.body;
 
+    if (!service_id) {
+      return res.status(400).json({ message: "Service ID is required" });
+    }
+
+    // Check if order exists AND belongs to customer
+    const [orders] = await pool.execute(
+      "SELECT * FROM orders WHERE id = ? AND customer_id = ?",
+      [id, req.customer.id]
+    );
+    if (orders.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Order not found or access denied" });
+    }
+
+    // Check if service exists
+    const [services] = await pool.execute(
+      "SELECT * FROM services WHERE id = ?",
+      [service_id]
+    );
+    if (services.length === 0) {
+      return res.status(404).json({ message: "Service not found" });
+    }
+
+    // Add service to order
+    try {
+      await pool.execute(
+        "INSERT INTO order_services (order_id, service_id) VALUES (?, ?)",
+        [id, service_id]
+      );
+      res.json({ message: "Service added to order successfully" });
+    } catch (error) {
+      if (error.code === "ER_DUP_ENTRY") {
+        return res
+          .status(400)
+          .json({ message: "Service already added to this order" });
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error("Add service to order error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+module.exports = router;

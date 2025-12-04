@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../config/database");
+const authenticateCustomer = require("../middleware/customerAuth");
 
 // Get all customers with search and pagination
 router.get("/", async (req, res) => {
@@ -173,10 +174,18 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// Get customer vehicles
-router.get("/:id/vehicles", async (req, res) => {
+// Get customer vehicles - PROTECTED for customers
+router.get("/:id/vehicles", authenticateCustomer, async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Verify customer can only access their own vehicles
+    if (req.customer.id !== parseInt(id)) {
+      return res.status(403).json({
+        message: "You can only access your own vehicles",
+      });
+    }
+
     const [vehicles] = await pool.execute(
       "SELECT * FROM vehicles WHERE customer_id = ?",
       [id]
@@ -188,11 +197,28 @@ router.get("/:id/vehicles", async (req, res) => {
   }
 });
 
-// Create new vehicle for customer
-router.post("/:id/vehicles", async (req, res) => {
+// Create new vehicle for customer - PROTECTED
+router.post("/:id/vehicles", authenticateCustomer, async (req, res) => {
   try {
     const { id } = req.params;
-    const { make, model, year, vin, license_plate, color, mileage } = req.body;
+
+    // Verify customer can only add vehicles to their own account
+    if (req.customer.id !== parseInt(id)) {
+      return res.status(403).json({
+        message: "You can only add vehicles to your own account",
+      });
+    }
+
+    const {
+      make,
+      model,
+      year,
+      vehicle_type,
+      vin,
+      license_plate,
+      color,
+      mileage,
+    } = req.body;
 
     // Validate customer exists
     const [customers] = await pool.execute(
@@ -209,12 +235,13 @@ router.post("/:id/vehicles", async (req, res) => {
     }
 
     const [result] = await pool.execute(
-      "INSERT INTO vehicles (customer_id, make, model, year, vin, license_plate, color, mileage) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO vehicles (customer_id, make, model, year, vehicle_type, vin, license_plate, color, mileage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         id,
         make,
         model,
         year || null,
+        vehicle_type || null,
         vin || null,
         license_plate || null,
         color || null,
@@ -237,10 +264,18 @@ router.post("/:id/vehicles", async (req, res) => {
   }
 });
 
-// Get customer orders
-router.get("/:id/orders", async (req, res) => {
+// Get customer orders - PROTECTED
+router.get("/:id/orders", authenticateCustomer, async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Verify customer can only access their own orders
+    if (req.customer.id !== parseInt(id)) {
+      return res.status(403).json({
+        message: "You can only access your own orders",
+      });
+    }
+
     const [orders] = await pool.execute(
       `SELECT o.*, v.make, v.model, v.year 
        FROM orders o 
@@ -249,6 +284,21 @@ router.get("/:id/orders", async (req, res) => {
        ORDER BY o.created_at DESC`,
       [id]
     );
+
+    // Get services for each order
+    for (const order of orders) {
+      const [services] = await pool.execute(
+        `
+        SELECT s.id, s.name, s.description
+        FROM services s
+        INNER JOIN order_services os ON s.id = os.service_id
+        WHERE os.order_id = ?
+      `,
+        [order.id]
+      );
+      order.services = services;
+    }
+
     res.json({ orders });
   } catch (error) {
     console.error("Get customer orders error:", error);

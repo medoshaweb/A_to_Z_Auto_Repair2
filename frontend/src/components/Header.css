@@ -1,10 +1,11 @@
 .header {
   width: 100%;
-  background-color: #ffffff;
+  background-color: var(--bg-primary);
   position: sticky;
   top: 0;
   z-index: 1000;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: adds subtle shadow when sticky */
+  box-shadow: 0 2px 4px var(--shadow);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .top-bar {
@@ -13,7 +14,8 @@
   align-items: center;
   padding: 8px 40px;
   font-size: 14px;
-  background-color: #ffffff;
+  background-color: var(--bg-primary);
+  transition: background-color 0.3s ease;
 }
 
 .top-bar-left {
@@ -27,18 +29,21 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #1e3a8a;
+  color: var(--accent-color);
   font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .top-bar-right .separator {
-  color: #1e3a8a;
+  color: var(--accent-color);
+  transition: color 0.3s ease;
 }
 
 .main-nav {
-  background-color: #ffffff;
-  border-top: 1px solid #e0e0e0;
-  border-bottom: 1px solid #e0e0e0;
+  background-color: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .nav-container {
@@ -75,7 +80,7 @@
 }
 
 .nav-link {
-  color: #1e3a8a;
+  color: var(--accent-color);
   text-decoration: none;
   font-weight: 600;
   font-size: 14px;
@@ -88,9 +93,10 @@
 }
 
 .nav-separator {
-  color: #1e3a8a;
+  color: var(--accent-color);
   font-weight: 300;
   margin: 0 5px;
+  transition: color 0.3s ease;
 }
 
 .sign-in-btn {

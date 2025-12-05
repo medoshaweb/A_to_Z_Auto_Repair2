@@ -7,22 +7,26 @@
 .page-content {
   display: flex;
   flex: 1;
-  background-color: #f5f5f5;
+  background-color: var(--bg-secondary);
   min-height: calc(100vh - 200px);
+  transition: background-color 0.3s ease;
 }
 
 .main-admin-content {
   flex: 1;
   padding: 40px;
-  background-color: #f5f5f5;
+  background-color: var(--bg-secondary);
+  transition: background-color 0.3s ease;
 }
 
 .detail-section {
-  background-color: #ffffff;
+  background-color: var(--bg-primary);
   border-radius: 8px;
   padding: 30px;
   margin-bottom: 30px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--shadow);
+  border: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .section-header {
@@ -50,26 +54,29 @@
 }
 
 .section-title {
-  color: #1e3a8a;
+  color: var(--accent-color);
   font-size: 24px;
   font-weight: 700;
   margin-bottom: 20px;
+  transition: color 0.3s ease;
 }
 
 .info-details p {
-  color: #1e3a8a;
+  color: var(--accent-color);
   font-size: 16px;
   margin-bottom: 10px;
+  transition: color 0.3s ease;
 }
 
 .edit-link {
-  color: #1e3a8a;
+  color: var(--accent-color);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 5px;
   margin-top: 10px;
   font-size: 16px;
+  transition: color 0.3s ease;
 }
 
 .edit-link:hover {
@@ -89,13 +96,14 @@
 }
 
 .empty-box {
-  border: 2px solid #e0e0e0;
+  border: 2px solid var(--border-color);
   border-radius: 4px;
   padding: 40px;
   text-align: center;
-  color: #999;
+  color: var(--text-tertiary);
   margin-bottom: 20px;
-  background-color: #fafafa;
+  background-color: var(--bg-secondary);
+  transition: border-color 0.3s ease, color 0.3s ease, background-color 0.3s ease;
 }
 
 .vehicles-list {
@@ -103,16 +111,18 @@
 }
 
 .vehicle-item {
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 15px;
   margin-bottom: 15px;
-  background-color: #fafafa;
+  background-color: var(--bg-secondary);
+  transition: border-color 0.3s ease, background-color 0.3s ease;
 }
 
 .vehicle-item p {
   margin: 5px 0;
-  color: #333;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .add-vehicle-btn {
@@ -132,9 +142,10 @@
 }
 
 .empty-orders {
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 16px;
   font-style: italic;
+  transition: color 0.3s ease;
 }
 
 .orders-list {
@@ -142,24 +153,27 @@
 }
 
 .order-item {
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   padding: 15px;
   margin-bottom: 15px;
-  background-color: #fafafa;
+  background-color: var(--bg-secondary);
+  transition: border-color 0.3s ease, background-color 0.3s ease;
 }
 
 .order-item p {
   margin: 5px 0;
-  color: #333;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .loading,
 .error {
   text-align: center;
   padding: 40px;
-  color: #666;
+  color: var(--text-secondary);
   font-size: 16px;
+  transition: color 0.3s ease;
 }
 
 .error {

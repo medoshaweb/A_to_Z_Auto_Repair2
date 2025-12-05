@@ -7,23 +7,26 @@
 .page-content {
   display: flex;
   flex: 1;
-  background-color: #f5f5f5;
+  background-color: var(--bg-secondary);
   min-height: calc(100vh - 200px);
+  transition: background-color 0.3s ease;
 }
 
 .main-admin-content {
   flex: 1;
   padding: 40px;
-  background-color: #f5f5f5;
+  background-color: var(--bg-secondary);
+  transition: background-color 0.3s ease;
 }
 
 .page-title {
-  color: #1e3a8a;
+  color: var(--accent-color);
   font-size: 36px;
   font-weight: 700;
   margin-bottom: 30px;
   position: relative;
   padding-bottom: 10px;
+  transition: color 0.3s ease;
 }
 
 .title-underline {
@@ -37,12 +40,14 @@
 }
 
 .table-container {
-  background-color: #ffffff;
+  background-color: var(--bg-primary);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--shadow);
   margin-bottom: 20px;
   overflow-x: auto;
+  border: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .orders-table {

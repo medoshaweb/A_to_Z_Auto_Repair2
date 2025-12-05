@@ -4,6 +4,11 @@
   min-height: calc(100vh - 200px);
   padding: 20px 0;
   flex-shrink: 0;
+  transition: background-color 0.3s ease;
+}
+
+[data-theme='dark'] .admin-sidebar {
+  background-color: #152c6b;
 }
 
 .sidebar-title {

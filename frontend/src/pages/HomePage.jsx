@@ -2,6 +2,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { GiFlatTire } from "react-icons/gi";
+import { FaCarBattery } from "react-icons/fa";
 import "./HomePage.css";
 
 const HomePage = () => {
@@ -105,7 +107,7 @@ const HomePage = () => {
               </p>
             </div>
             <div className="service-card">
-              <div className="service-icon">🛞</div>
+              <div className="service-icon">🛠</div>
               <h3>Brake Repair & Service</h3>
               <p>
                 Expert brake inspection, repair, and replacement services for
@@ -121,7 +123,7 @@ const HomePage = () => {
               </p>
             </div>
             <div className="service-card">
-              <div className="service-icon">🔋</div>
+              <div className="service-icon"><FaCarBattery /></div>
               <h3>Battery & Electrical</h3>
               <p>
                 Complete electrical system diagnostics, battery replacement, and
@@ -129,7 +131,8 @@ const HomePage = () => {
               </p>
             </div>
             <div className="service-card">
-              <div className="service-icon">🛞</div>
+              <div className="service-icon"><GiFlatTire />
+              </div>
               <h3>Tire & Wheel Service</h3>
               <p>
                 Tire installation, rotation, balancing, and wheel alignment

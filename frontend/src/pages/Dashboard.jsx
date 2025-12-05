@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import AdminSidebar from "../components/AdminSidebar";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { GiFlatTire } from "react-icons/gi";
 import "./Dashboard.css";
 
 const Dashboard = () => {
@@ -42,14 +43,14 @@ const Dashboard = () => {
       title: "Engine Service & Repair",
       link: "READ MORE +",
       linkPath: "/admin/services",
-      icon: "🔩",
+      icon: "🛠",
     },
     {
       category: "SERVICE AND REPAIRS",
       title: "Tyre & Wheels",
       link: "READ MORE +",
       linkPath: "/admin/services",
-      icon: "🛞",
+      icon: <GiFlatTire />,
     },
     {
       category: "SERVICE AND REPAIRS",

@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./Header.css";
+import ThemeToggle from "./ThemeToggle";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -74,6 +75,7 @@ const Header = () => {
                 MY ACCOUNT
               </Link>
             )}
+            <ThemeToggle />
             <span className="nav-separator">|</span>
             {isAdmin ? (
               <button className="logout-btn" onClick={handleAdminLogout}>

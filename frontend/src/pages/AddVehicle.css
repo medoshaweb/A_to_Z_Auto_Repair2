@@ -9,6 +9,11 @@
   max-width: 600px;
   margin: 20px auto;
   padding: 20px;
+  background-color: var(--bg-primary);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px var(--shadow);
+  border: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .form-group {
@@ -18,10 +23,22 @@
 .form-input {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 16px;
   box-sizing: border-box;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: border-color 0.3s, background-color 0.3s ease, color 0.3s ease;
+}
+
+.form-input:focus {
+  border-color: var(--accent-color);
+  outline: none;
+}
+
+.form-input::placeholder {
+  color: var(--text-tertiary);
 }
 
 .submit-button {
@@ -46,11 +63,17 @@
 }
 
 .error-message {
-  color: #d32f2f;
+  color: #c62828;
   margin-bottom: 15px;
   padding: 10px;
-  background-color: #ffebee;
+  background-color: rgba(198, 40, 40, 0.1);
   border-radius: 4px;
+  border: 1px solid rgba(198, 40, 40, 0.3);
+}
+
+[data-theme='dark'] .error-message {
+  background-color: rgba(198, 40, 40, 0.2);
+  border-color: rgba(198, 40, 40, 0.4);
 }
 
 .form-buttons {

@@ -7,23 +7,26 @@
 .page-content {
   display: flex;
   flex: 1;
-  background-color: #f5f5f5;
+  background-color: var(--bg-secondary);
   min-height: calc(100vh - 200px);
+  transition: background-color 0.3s ease;
 }
 
 .main-admin-content {
   flex: 1;
   padding: 40px;
-  background-color: #f5f5f5;
+  background-color: var(--bg-secondary);
+  transition: background-color 0.3s ease;
 }
 
 .page-title {
-  color: #1e3a8a;
+  color: var(--accent-color);
   font-size: 36px;
   font-weight: 700;
   margin-bottom: 30px;
   position: relative;
   padding-bottom: 10px;
+  transition: color 0.3s ease;
 }
 
 .title-underline {
@@ -37,11 +40,13 @@
 }
 
 .form-container {
-  background-color: #ffffff;
+  background-color: var(--bg-primary);
   padding: 40px;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px var(--shadow);
   max-width: 600px;
+  border: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .form-container form {
@@ -58,20 +63,22 @@
   width: 100%;
   padding: 14px 16px;
   font-size: 16px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid var(--border-color);
   border-radius: 4px;
   outline: none;
-  transition: border-color 0.3s;
+  transition: border-color 0.3s, background-color 0.3s ease, color 0.3s ease;
   font-family: inherit;
   box-sizing: border-box;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .form-input:focus {
-  border-color: #1e3a8a;
+  border-color: var(--accent-color);
 }
 
 .form-input::placeholder {
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .form-input select {
@@ -84,13 +91,18 @@
 }
 
 .error-message {
-  background-color: #ffebee;
+  background-color: rgba(198, 40, 40, 0.1);
   color: #c62828;
   padding: 12px;
   border-radius: 4px;
   font-size: 14px;
   text-align: center;
-  border: 1px solid #ffcdd2;
+  border: 1px solid rgba(198, 40, 40, 0.3);
+}
+
+[data-theme='dark'] .error-message {
+  background-color: rgba(198, 40, 40, 0.2);
+  border-color: rgba(198, 40, 40, 0.4);
 }
 
 .submit-button {

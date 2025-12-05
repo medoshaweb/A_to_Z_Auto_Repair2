@@ -2,6 +2,11 @@
   background-color: #1E3A8A;
   color: #ffffff;
   width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+[data-theme='dark'] .footer {
+  background-color: #152c6b;
 }
 
 .footer-top {

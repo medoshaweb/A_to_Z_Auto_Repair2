@@ -44,9 +44,9 @@ const Header = () => {
           <div className="logo-section">
             <div className="logo-icon">
               <img
-                src="/image/car_logo5.png"
+                src="/image/Red-and-Blue.png"
                 alt="car_logo"
-                width="300"
+                width="150"
                 height="70"
               />
             </div>

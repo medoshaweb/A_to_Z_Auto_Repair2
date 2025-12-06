@@ -1,9 +1,19 @@
 const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
 const cors = require("cors");
 const initDatabase = require("./config/initDatabase");
 require("dotenv").config();
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
+});
+
 const PORT = process.env.PORT || 5000;
 
 // Middleware
@@ -34,6 +44,8 @@ const customerRoutes = require("./routes/customers");
 const employeeRoutes = require("./routes/employees");
 const orderRoutes = require("./routes/orders");
 const serviceRoutes = require("./routes/services");
+const chatbotRoutes = require("./routes/chatbot");
+const recommendationsRoutes = require("./routes/recommendations");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/customer-auth", customerAuthRoutes);
@@ -41,15 +53,41 @@ app.use("/api/customers", customerRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/services", serviceRoutes);
+app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/recommendations", recommendationsRoutes);
 
 // Health check route
 app.get("/api/health", (req, res) => {
   res.json({ message: "Server is running", status: "ok" });
 });
 
+// Socket.io for real-time updates
+io.on("connection", (socket) => {
+  console.log("Client connected:", socket.id);
+
+  // Join order room for real-time updates
+  socket.on("join:order", (orderId) => {
+    socket.join(`order:${orderId}`);
+    console.log(`Client ${socket.id} joined order:${orderId}`);
+  });
+
+  // Leave order room
+  socket.on("leave:order", (orderId) => {
+    socket.leave(`order:${orderId}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected:", socket.id);
+  });
+});
+
+// Make io available to routes
+app.set("io", io);
+
 // Start server
-const server = app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log(`Socket.io is ready for real-time connections`);
 });
 
 // Handle server errors

@@ -6,4 +6,6 @@ export * from './orders';
 export * from './services';
 export * from './employees';
 export * from './vehicles';
+export * from './chatbot';
+export * from './recommendations';
 

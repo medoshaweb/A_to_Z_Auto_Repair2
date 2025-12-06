@@ -1,5 +1,18 @@
 const pool = require("../config/database");
 
+// Helper function to emit order updates via Socket.io
+const emitOrderUpdate = (req, orderId, status) => {
+  const io = req.app.get("io");
+  if (io) {
+    io.to(`order:${orderId}`).emit("order:status", {
+      orderId,
+      status,
+      timestamp: new Date().toISOString(),
+    });
+    io.emit("order:updated", { orderId, status });
+  }
+};
+
 // Get all orders with customer and vehicle info
 const getAllOrders = async (req, res) => {
   try {
@@ -208,6 +221,9 @@ const createOrder = async (req, res) => {
     );
     newOrder[0].services = services;
 
+    // Emit real-time update
+    emitOrderUpdate(req, orderId, "Received");
+
     res.status(201).json({
       message: "Order created successfully",
       order: newOrder[0],
@@ -318,6 +334,11 @@ const updateOrder = async (req, res) => {
       [id]
     );
     updated[0].services = services;
+
+    // Emit real-time update if status changed
+    if (status && status !== existing[0].status) {
+      emitOrderUpdate(req, id, status);
+    }
 
     res.json({
       message: "Order updated successfully",

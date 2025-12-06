@@ -6,6 +6,7 @@ import {
   Navigate,
   Link,
 } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import "./App.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
@@ -33,6 +34,7 @@ import EditEmployee from "./pages/EditEmployee";
 import ServicesList from "./pages/ServicesList";
 import ForgotPassword from "./components/ForgotPassword";
 import ForgotUsername from "./components/ForgotUsername";
+import AIChatbot from "./components/AIChatbot";
 
 function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -141,6 +143,29 @@ function PlaceholderPage({ title }) {
 function App() {
   return (
     <Router>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: "var(--bg-secondary)",
+            color: "var(--text-primary)",
+            border: "1px solid var(--border-color)",
+          },
+          success: {
+            iconTheme: {
+              primary: "#4caf50",
+              secondary: "#fff",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#f44336",
+              secondary: "#fff",
+            },
+          },
+        }}
+      />
       <Routes>
         <Route path="/" element={<HomePage />} />
 
@@ -311,6 +336,7 @@ function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <AIChatbot />
     </Router>
   );
 }

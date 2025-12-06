@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { adminAuthAPI } from "../api";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import toast from "react-hot-toast";
 import "./LoginForm.css";
 
 const LoginForm = () => {
@@ -27,24 +28,29 @@ const LoginForm = () => {
     setLoading(true);
 
     try {
-      const response = await adminAuthAPI.login(formData.email, formData.password);
+      const response = await adminAuthAPI.login(
+        formData.email,
+        formData.password
+      );
 
       // Store token in localStorage
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(response.user));
 
       // Show success message
-      alert("Login successful!");
+      toast.success("Login successful!");
 
       // Reset form
       setFormData({ email: "", password: "" });
 
       // Redirect to dashboard
-      window.location.href = "/admin/dashboard";
+      setTimeout(() => {
+        window.location.href = "/admin/dashboard";
+      }, 500);
     } catch (err) {
-      setError(
-        err.message || "Login failed. Please try again."
-      );
+      const errorMessage = err.message || "Login failed. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -47,7 +47,7 @@ const Dashboard = () => {
     },
     {
       category: "SERVICE AND REPAIRS",
-      title: "Tyre & Wheels",
+      title: "Tire & Wheels",
       link: "READ MORE +",
       linkPath: "/admin/services",
       icon: <GiFlatTire />,
@@ -79,9 +79,25 @@ const Dashboard = () => {
             <span className="title-underline"></span>
           </h1>
           <p className="dashboard-description">
-            Manage your auto repair shop operations efficiently. View orders,
-            manage employees, and track services from this comprehensive
-            dashboard.
+            Welcome to your comprehensive auto repair management center. From
+            this dashboard, you can efficiently manage all aspects of A to Z
+            Auto Repair operations. Track and process service orders for our
+            full range of automotive services including{" "}
+            <strong>Engine Service & Repair</strong>,{" "}
+            <strong>Brake Repair & Service</strong>,{" "}
+            <strong>Transmission Service</strong>,{" "}
+            <strong>Battery & Electrical Systems</strong>,{" "}
+            <strong>Tire & Wheel Services</strong>,{" "}
+            <strong>AC & Heating</strong>, <strong>Oil Changes</strong>,{" "}
+            <strong>Spark Plug Replacement</strong>,{" "}
+            <strong>Oxygen Sensor Services</strong>,{" "}
+            <strong>Ignition System Repairs</strong>, and{" "}
+            <strong>Camera Software Programming</strong>. Manage your team of
+            certified technicians, monitor customer vehicles and service
+            history, and ensure every order receives expert attention. This
+            centralized hub empowers you to deliver "Services Beyond
+            Expectation" with real-time order tracking, intelligent service
+            recommendations, and seamless workflow management.
           </p>
 
           <div className="dashboard-cards-grid">

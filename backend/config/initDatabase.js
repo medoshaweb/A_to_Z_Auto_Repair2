@@ -276,6 +276,46 @@ async function initDatabase() {
     `);
     console.log("Order_services table created or already exists");
 
+    // Add payment_status column to orders if it doesn't exist (migration)
+    try {
+      await connection.query(
+        "ALTER TABLE orders ADD COLUMN payment_status VARCHAR(50) DEFAULT 'pending'"
+      );
+      console.log("Added payment_status column to orders table");
+    } catch (error) {
+      if (error.code !== "ER_DUP_FIELDNAME") {
+        console.log(
+          "payment_status column already exists or error:",
+          error.message
+        );
+      }
+    }
+
+    // Create payments table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS payments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        order_id INT NOT NULL,
+        customer_id INT NOT NULL,
+        amount DECIMAL(10, 2) NOT NULL,
+        currency VARCHAR(10) DEFAULT 'USD',
+        payment_method VARCHAR(50) NOT NULL,
+        payment_intent_id VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'pending',
+        transaction_id VARCHAR(255),
+        metadata JSON,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+        FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+        INDEX idx_order_id (order_id),
+        INDEX idx_customer_id (customer_id),
+        INDEX idx_status (status),
+        INDEX idx_payment_intent_id (payment_intent_id)
+      )
+    `);
+    console.log("Payments table created or already exists");
+
     // Insert default services if they don't exist
     const [existingServices] = await connection.query(
       "SELECT COUNT(*) as count FROM services"

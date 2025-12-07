@@ -8,4 +8,5 @@ export * from './employees';
 export * from './vehicles';
 export * from './chatbot';
 export * from './recommendations';
+export { default as paymentsAPI } from './payments';
 

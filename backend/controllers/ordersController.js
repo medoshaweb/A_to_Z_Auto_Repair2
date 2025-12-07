@@ -24,6 +24,7 @@ const getAllOrders = async (req, res) => {
         o.description,
         o.status,
         o.total_amount,
+        o.payment_status,
         o.received_by,
         o.created_at,
         o.updated_at,

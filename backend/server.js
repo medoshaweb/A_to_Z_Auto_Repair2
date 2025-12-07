@@ -18,6 +18,12 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
+
+// Stripe webhook needs raw body - register payment routes before body parser
+const paymentRoutes = require("./routes/payments");
+app.use("/api/payments", paymentRoutes);
+
+// Body parser for other routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

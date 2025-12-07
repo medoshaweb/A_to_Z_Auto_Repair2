@@ -1,34 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import axios from 'axios';
-import AdminSidebar from '../components/AdminSidebar';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import './OrderDetail.css';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import axios from "axios";
+import AdminSidebar from "../components/AdminSidebar";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import PaymentModal from "../components/PaymentModal";
+import toast from "react-hot-toast";
+import "./OrderDetail.css";
 
 const OrderDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
-  const isEditMode = location.pathname.includes('/edit');
-  
+  const isEditMode = location.pathname.includes("/edit");
+
   const [order, setOrder] = useState(null);
   const [services, setServices] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isCustomer, setIsCustomer] = useState(false);
 
   const [formData, setFormData] = useState({
-    description: '',
-    price: '',
-    status: 'Received',
+    description: "",
+    price: "",
+    status: "Received",
     selectedServices: [],
-    vehicle_id: null
+    vehicle_id: null,
   });
 
   useEffect(() => {
     fetchOrderData();
+    // Check if user is a customer
+    const customerToken = localStorage.getItem("customerToken");
+    setIsCustomer(!!customerToken);
   }, [id]);
 
   const fetchOrderData = async () => {
@@ -36,7 +43,7 @@ const OrderDetail = () => {
       setLoading(true);
       const [orderRes, servicesRes] = await Promise.all([
         axios.get(`http://localhost:5000/api/orders/${id}`),
-        axios.get('http://localhost:5000/api/services')
+        axios.get("http://localhost:5000/api/services"),
       ]);
 
       const orderData = orderRes.data.order;
@@ -46,50 +53,54 @@ const OrderDetail = () => {
       // If customer has vehicles, fetch them
       if (orderData.customer_id) {
         try {
-          const vehiclesRes = await axios.get(`http://localhost:5000/api/customers/${orderData.customer_id}/vehicles`);
+          const vehiclesRes = await axios.get(
+            `http://localhost:5000/api/customers/${orderData.customer_id}/vehicles`
+          );
           setVehicles(vehiclesRes.data.vehicles);
         } catch (err) {
-          console.error('Error fetching vehicles:', err);
+          console.error("Error fetching vehicles:", err);
         }
       }
 
       // Set form data
       setFormData({
-        description: orderData.description || '',
-        price: orderData.total_amount || '',
-        status: orderData.status || 'Received',
-        selectedServices: orderData.services ? orderData.services.map(s => s.id) : [],
-        vehicle_id: orderData.vehicle_id
+        description: orderData.description || "",
+        price: orderData.total_amount || "",
+        status: orderData.status || "Received",
+        selectedServices: orderData.services
+          ? orderData.services.map((s) => s.id)
+          : [],
+        vehicle_id: orderData.vehicle_id,
       });
     } catch (error) {
-      console.error('Error fetching order data:', error);
-      setError('Failed to load order data');
+      console.error("Error fetching order data:", error);
+      setError("Failed to load order data");
     } finally {
       setLoading(false);
     }
   };
 
   const handleServiceToggle = (serviceId) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       selectedServices: prev.selectedServices.includes(serviceId)
-        ? prev.selectedServices.filter(id => id !== serviceId)
-        : [...prev.selectedServices, serviceId]
+        ? prev.selectedServices.filter((id) => id !== serviceId)
+        : [...prev.selectedServices, serviceId],
     }));
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    setError('');
+    setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setSaving(true);
 
     try {
@@ -98,14 +109,17 @@ const OrderDetail = () => {
         price: parseFloat(formData.price) || 0,
         status: formData.status,
         service_ids: formData.selectedServices,
-        vehicle_id: formData.vehicle_id
+        vehicle_id: formData.vehicle_id,
       };
 
       await axios.put(`http://localhost:5000/api/orders/${id}`, updateData);
-      alert('Order updated successfully!');
-      navigate('/admin/orders');
+      alert("Order updated successfully!");
+      navigate("/admin/orders");
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update order. Please try again.');
+      setError(
+        err.response?.data?.message ||
+          "Failed to update order. Please try again."
+      );
     } finally {
       setSaving(false);
     }
@@ -113,8 +127,8 @@ const OrderDetail = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
@@ -156,7 +170,7 @@ const OrderDetail = () => {
         <AdminSidebar />
         <main className="main-admin-content">
           <h1 className="page-title">
-            {isEditMode ? 'Edit Order' : 'Order Details'}
+            {isEditMode ? "Edit Order" : "Order Details"}
             <span className="title-underline"></span>
           </h1>
 
@@ -168,9 +182,15 @@ const OrderDetail = () => {
               <div className="form-section">
                 <h3 className="section-title">Customer Information</h3>
                 <div className="info-box">
-                  <p><strong>Name:</strong> {order.first_name} {order.last_name}</p>
-                  <p><strong>Email:</strong> {order.email}</p>
-                  <p><strong>Phone:</strong> {order.phone || 'N/A'}</p>
+                  <p>
+                    <strong>Name:</strong> {order.first_name} {order.last_name}
+                  </p>
+                  <p>
+                    <strong>Email:</strong> {order.email}
+                  </p>
+                  <p>
+                    <strong>Phone:</strong> {order.phone || "N/A"}
+                  </p>
                 </div>
               </div>
 
@@ -179,14 +199,15 @@ const OrderDetail = () => {
                 <h3 className="section-title">Vehicle</h3>
                 <select
                   name="vehicle_id"
-                  value={formData.vehicle_id || ''}
+                  value={formData.vehicle_id || ""}
                   onChange={handleChange}
                   className="form-select"
                 >
                   <option value="">Select a vehicle</option>
-                  {vehicles.map(vehicle => (
+                  {vehicles.map((vehicle) => (
                     <option key={vehicle.id} value={vehicle.id}>
-                      {vehicle.year} {vehicle.make} {vehicle.model} - {vehicle.license_plate || 'N/A'}
+                      {vehicle.year} {vehicle.make} {vehicle.model} -{" "}
+                      {vehicle.license_plate || "N/A"}
                     </option>
                   ))}
                 </select>
@@ -201,13 +222,17 @@ const OrderDetail = () => {
                       <label className="service-label">
                         <input
                           type="checkbox"
-                          checked={formData.selectedServices.includes(service.id)}
+                          checked={formData.selectedServices.includes(
+                            service.id
+                          )}
                           onChange={() => handleServiceToggle(service.id)}
                           className="service-checkbox"
                         />
                         <div className="service-content">
                           <span className="service-name">{service.name}:</span>
-                          <span className="service-description">{service.description}</span>
+                          <span className="service-description">
+                            {service.description}
+                          </span>
                         </div>
                       </label>
                     </div>
@@ -263,7 +288,7 @@ const OrderDetail = () => {
               </div>
 
               <button type="submit" className="submit-button" disabled={saving}>
-                {saving ? 'UPDATING...' : 'UPDATE ORDER'}
+                {saving ? "UPDATING..." : "UPDATE ORDER"}
               </button>
             </form>
           ) : (
@@ -272,9 +297,15 @@ const OrderDetail = () => {
               <div className="detail-section">
                 <h3 className="section-title">Customer Information</h3>
                 <div className="info-box">
-                  <p><strong>Name:</strong> {order.first_name} {order.last_name}</p>
-                  <p><strong>Email:</strong> {order.email}</p>
-                  <p><strong>Phone:</strong> {order.phone || 'N/A'}</p>
+                  <p>
+                    <strong>Name:</strong> {order.first_name} {order.last_name}
+                  </p>
+                  <p>
+                    <strong>Email:</strong> {order.email}
+                  </p>
+                  <p>
+                    <strong>Phone:</strong> {order.phone || "N/A"}
+                  </p>
                 </div>
               </div>
 
@@ -284,12 +315,25 @@ const OrderDetail = () => {
                 <div className="info-box">
                   {order.make && order.model ? (
                     <>
-                      <p><strong>Vehicle:</strong> {order.make} {order.model}</p>
-                      <p><strong>Year:</strong> {order.year || 'N/A'}</p>
-                      <p><strong>License Plate:</strong> {order.license_plate || 'N/A'}</p>
-                      <p><strong>Color:</strong> {order.color || 'N/A'}</p>
-                      <p><strong>Mileage:</strong> {order.mileage || 'N/A'}</p>
-                      <p><strong>VIN:</strong> {order.vin || 'N/A'}</p>
+                      <p>
+                        <strong>Vehicle:</strong> {order.make} {order.model}
+                      </p>
+                      <p>
+                        <strong>Year:</strong> {order.year || "N/A"}
+                      </p>
+                      <p>
+                        <strong>License Plate:</strong>{" "}
+                        {order.license_plate || "N/A"}
+                      </p>
+                      <p>
+                        <strong>Color:</strong> {order.color || "N/A"}
+                      </p>
+                      <p>
+                        <strong>Mileage:</strong> {order.mileage || "N/A"}
+                      </p>
+                      <p>
+                        <strong>VIN:</strong> {order.vin || "N/A"}
+                      </p>
                     </>
                   ) : (
                     <p>No vehicle information available</p>
@@ -302,7 +346,7 @@ const OrderDetail = () => {
                 <h3 className="section-title">Services</h3>
                 <div className="services-list">
                   {order.services && order.services.length > 0 ? (
-                    order.services.map(service => (
+                    order.services.map((service) => (
                       <div key={service.id} className="service-item-view">
                         <strong>{service.name}</strong>
                         <p>{service.description}</p>
@@ -318,18 +362,60 @@ const OrderDetail = () => {
               <div className="detail-section">
                 <h3 className="section-title">Order Details</h3>
                 <div className="info-box">
-                  <p><strong>Order ID:</strong> {order.id}</p>
-                  <p><strong>Status:</strong> 
-                    <span className={`status-badge status-${order.status?.toLowerCase().replace(' ', '-') || 'received'}`}>
-                      {order.status || 'Received'}
+                  <p>
+                    <strong>Order ID:</strong> {order.id}
+                  </p>
+                  <p>
+                    <strong>Status:</strong>
+                    <span
+                      className={`status-badge status-${
+                        order.status?.toLowerCase().replace(" ", "-") ||
+                        "received"
+                      }`}
+                    >
+                      {order.status || "Received"}
                     </span>
                   </p>
-                  <p><strong>Description:</strong> {order.description || 'N/A'}</p>
-                  <p><strong>Total Amount:</strong> ${order.total_amount || '0.00'}</p>
-                  <p><strong>Received by:</strong> {order.received_by || 'Admin'}</p>
-                  <p><strong>Order Date:</strong> {formatDate(order.created_at)}</p>
+                  <p>
+                    <strong>Description:</strong> {order.description || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Total Amount:</strong> $
+                    {order.total_amount || "0.00"}
+                  </p>
+                  <p>
+                    <strong>Payment Status:</strong>
+                    <span
+                      className={`payment-badge payment-${
+                        order.payment_status || "pending"
+                      }`}
+                    >
+                      {order.payment_status === "paid" ? "Paid" : "Pending"}
+                    </span>
+                  </p>
+                  <p>
+                    <strong>Received by:</strong> {order.received_by || "Admin"}
+                  </p>
+                  <p>
+                    <strong>Order Date:</strong> {formatDate(order.created_at)}
+                  </p>
                 </div>
               </div>
+
+              {/* Payment Button (for customers only) */}
+              {isCustomer &&
+                order.payment_status !== "paid" &&
+                order.total_amount > 0 && (
+                  <div className="payment-section">
+                    <button
+                      onClick={() => setShowPaymentModal(true)}
+                      className="pay-now-btn"
+                    >
+                      Pay Now - $
+                      {parseFloat(order.total_amount || 0).toFixed(2)}
+                    </button>
+                  </div>
+                )}
 
               <div className="action-buttons">
                 <button
@@ -339,7 +425,7 @@ const OrderDetail = () => {
                   Edit Order
                 </button>
                 <button
-                  onClick={() => navigate('/admin/orders')}
+                  onClick={() => navigate("/admin/orders")}
                   className="back-btn"
                 >
                   Back to Orders
@@ -350,9 +436,22 @@ const OrderDetail = () => {
         </main>
       </div>
       <Footer />
+
+      {/* Payment Modal */}
+      {order && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          orderId={order.id}
+          amount={order.total_amount || 0}
+          onSuccess={() => {
+            // Refresh order data
+            fetchOrderData();
+          }}
+        />
+      )}
     </div>
   );
 };
 
 export default OrderDetail;
-

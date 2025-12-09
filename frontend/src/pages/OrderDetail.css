@@ -158,13 +158,19 @@
   font-size: 16px;
   display: block;
   margin-bottom: 8px;
+  transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .service-item-view strong {
+  color: #60a5fa;
 }
 
 .service-item-view p {
-  color: #666;
+  color: var(--text-secondary, #666);
   font-size: 14px;
   margin: 0;
   line-height: 1.5;
+  transition: color 0.3s ease;
 }
 
 .service-label {
@@ -214,6 +220,11 @@
   line-height: 1.5;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .service-description {
+  color: var(--text-primary, #e0e0e0);
 }
 
 .additional-requests {
@@ -335,10 +346,11 @@
 }
 
 .no-services {
-  color: #999;
+  color: var(--text-secondary, #999);
   font-style: italic;
   padding: 20px;
   text-align: center;
+  transition: color 0.3s ease;
 }
 
 .submit-button {
@@ -403,8 +415,9 @@
 .loading {
   text-align: center;
   padding: 40px;
-  color: #666;
+  color: var(--text-secondary, #666);
   font-size: 16px;
+  transition: color 0.3s ease;
 }
 
 .error {

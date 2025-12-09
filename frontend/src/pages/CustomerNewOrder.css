@@ -106,7 +106,7 @@
 /* Services Grid - Fixed to prevent overlapping */
 .services-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   grid-auto-rows: auto;
   gap: 20px;
   margin-top: 15px;
@@ -115,7 +115,7 @@
 
 .service-checkbox {
   display: flex;
-  flex-direction: row;
+  flex-direction: row !important;
   align-items: flex-start;
   padding: 20px;
   border: 2px solid var(--border-color);
@@ -127,8 +127,16 @@
   min-height: 100px;
   height: auto;
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
   position: relative;
+  overflow: visible; /* Allow content to be visible */
+  overflow-wrap: break-word; /* Ensure text wraps within container */
+  word-wrap: break-word; /* Legacy support */
+}
+
+[data-theme="dark"] .service-checkbox:hover {
+  background-color: var(--bg-secondary);
 }
 
 .service-checkbox:hover {
@@ -140,11 +148,12 @@
 .service-checkbox input[type="checkbox"] {
   margin-top: 2px;
   width: 22px;
-  height: 22px;
-  min-width: 22px;
-  min-height: 22px;
-  max-width: 22px;
+  height: 22px !important;
+  min-width: 22px !important;
+  min-height: 22px !important;
+  max-width: 22px !important;
   cursor: pointer;
+  flex: 0 0 22px; /* Don't grow, don't shrink, fixed at 22px */
   flex-shrink: 0;
   appearance: checkbox;
   -webkit-appearance: checkbox;
@@ -152,6 +161,9 @@
   accent-color: #1e3a8a;
   position: relative;
   z-index: 1;
+  box-sizing: border-box;
+  border: none !important; /* Remove any default border */
+  outline: none; /* Remove focus outline if needed */
 }
 
 .service-checkbox input[type="checkbox"]:checked {
@@ -159,12 +171,15 @@
 }
 
 .service-info {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
+  flex: 1 1 auto; /* Grow and shrink, use auto sizing */
+  display: flex !important;
+  flex-direction: column !important; /* Stack name and description vertically */
+  gap: 8px;
+  min-width: 0; /* Allow flex item to shrink */
+  max-width: 100%; /* Prevent overflow - flex will handle the constraint */
   box-sizing: border-box;
+  overflow-wrap: break-word; /* Break long words */
+  word-wrap: break-word; /* Legacy support */
   width: 100%;
 }
 
@@ -175,24 +190,38 @@
   display: block;
   line-height: 1.4;
   white-space: normal;
-  word-break: normal;
-  word-wrap: normal;
-  overflow-wrap: normal;
-  width: 100%;
+  word-break: break-word;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .service-info strong {
+  color: #60a5fa;
 }
 
 .service-description {
-  color: #666;
+  color: var(--text-secondary, #666);
   font-size: 14px;
   line-height: 1.6;
   margin: 0;
-  display: block;
+  margin-top: 4px;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
   white-space: normal;
   word-break: break-word;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  width: 100%;
   hyphens: auto;
+  max-width: 100%;
+  width: 100%;
+  transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .service-description {
+  color: var(--text-primary, #e0e0e0);
 }
 
 /* Form Buttons */

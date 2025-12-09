@@ -123,24 +123,6 @@ const CustomerNewOrder = () => {
             <span className="title-underline"></span>
           </h1>
 
-          {/* Debug info - remove in production */}
-          <div
-            style={{
-              padding: "10px",
-              background: "#f0f0f0",
-              marginBottom: "20px",
-              fontSize: "12px",
-              borderRadius: "4px",
-            }}
-          >
-            Debug: Vehicles: {vehicles.length} | Selected Vehicle:{" "}
-            {selectedVehicle || "None"} | Selected Services:{" "}
-            {selectedServices.length} | Loading: {loading ? "Yes" : "No"} |
-            Button Disabled:{" "}
-            {loading || vehicles.length === 0 || !selectedVehicle
-              ? "Yes"
-              : "No"}
-          </div>
 
           <div className="form-container">
             <form onSubmit={handleSubmit}>
@@ -180,7 +162,8 @@ const CustomerNewOrder = () => {
                 ) : (
                   <div className="services-grid">
                     {services.map((service) => (
-                      <label key={service.id} className="service-checkbox">
+                      <div key={service.id} className="service-item">
+                      <label className="service-label">
                         <input
                           type="checkbox"
                           checked={selectedServices.includes(service.id)}
@@ -195,11 +178,11 @@ const CustomerNewOrder = () => {
                           )}
                         </div>
                       </label>
+                      </div>
                     ))}
                   </div>
                 )}
               </div>
-
               {/* Description */}
               <div className="form-section">
                 <h3>Additional Details</h3>

@@ -303,6 +303,75 @@ const getCustomerOrders = async (req, res) => {
   }
 };
 
+// Get customer vehicles for admin - NO AUTH CHECK (admin can view any customer's vehicles)
+const getAdminCustomerVehicles = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate customer exists
+    const [customers] = await pool.execute(
+      "SELECT * FROM customers WHERE id = ?",
+      [id]
+    );
+    if (customers.length === 0) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    const [vehicles] = await pool.execute(
+      "SELECT * FROM vehicles WHERE customer_id = ?",
+      [id]
+    );
+    res.json({ vehicles });
+  } catch (error) {
+    console.error("Get admin customer vehicles error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get customer orders for admin - NO AUTH CHECK (admin can view any customer's orders)
+const getAdminCustomerOrders = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate customer exists
+    const [customers] = await pool.execute(
+      "SELECT * FROM customers WHERE id = ?",
+      [id]
+    );
+    if (customers.length === 0) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    const [orders] = await pool.execute(
+      `SELECT o.*, v.make, v.model, v.year 
+       FROM orders o 
+       LEFT JOIN vehicles v ON o.vehicle_id = v.id 
+       WHERE o.customer_id = ? 
+       ORDER BY o.created_at DESC`,
+      [id]
+    );
+
+    // Get services for each order
+    for (const order of orders) {
+      const [services] = await pool.execute(
+        `
+        SELECT s.id, s.name, s.description
+        FROM services s
+        INNER JOIN order_services os ON s.id = os.service_id
+        WHERE os.order_id = ?
+      `,
+        [order.id]
+      );
+      order.services = services;
+    }
+
+    res.json({ orders });
+  } catch (error) {
+    console.error("Get admin customer orders error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   getAllCustomers,
   getCustomerById,
@@ -311,5 +380,6 @@ module.exports = {
   getCustomerVehicles,
   createCustomerVehicle,
   getCustomerOrders,
+  getAdminCustomerVehicles,
+  getAdminCustomerOrders,
 };
-

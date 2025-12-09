@@ -61,10 +61,19 @@ const NewOrder = () => {
   const fetchVehicles = async () => {
     if (!selectedCustomer) return;
     try {
-      const response = await axios.get(`http://localhost:5000/api/customers/${selectedCustomer.id}/vehicles`);
+      // Get admin token for authentication
+      const token = localStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      
+      const response = await axios.get(
+        `http://localhost:5000/api/customers/${selectedCustomer.id}/vehicles`,
+        { headers }
+      );
       setVehicles(response.data.vehicles);
     } catch (error) {
       console.error('Error fetching vehicles:', error);
+      // Show error message to user
+      setError(error.response?.data?.message || 'Failed to fetch vehicles. Please try again.');
     }
   };
 

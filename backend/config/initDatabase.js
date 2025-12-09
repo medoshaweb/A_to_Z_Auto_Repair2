@@ -69,9 +69,12 @@ async function initDatabase() {
       );
       console.log("Added reset_token column to users table");
     } catch (error) {
-      if (error.code !== "ER_DUP_FIELDNAME") {
-        console.log(
-          "reset_token column already exists or error:",
+      if (error.code === "ER_DUP_FIELDNAME") {
+        // Column already exists - this is expected, suppress the error
+      } else {
+        // Real error occurred - log it
+        console.error(
+          "Error adding reset_token column to users table:",
           error.message
         );
       }
@@ -83,9 +86,12 @@ async function initDatabase() {
       );
       console.log("Added reset_token_expires column to users table");
     } catch (error) {
-      if (error.code !== "ER_DUP_FIELDNAME") {
-        console.log(
-          "reset_token_expires column already exists or error:",
+      if (error.code === "ER_DUP_FIELDNAME") {
+        // Column already exists - this is expected, suppress the error
+      } else {
+        // Real error occurred - log it
+        console.error(
+          "Error adding reset_token_expires column to users table:",
           error.message
         );
       }
@@ -116,9 +122,12 @@ async function initDatabase() {
       );
       console.log("Added reset_token column to customers table");
     } catch (error) {
-      if (error.code !== "ER_DUP_FIELDNAME") {
-        console.log(
-          "reset_token column already exists or error:",
+      if (error.code === "ER_DUP_FIELDNAME") {
+        // Column already exists - this is expected, suppress the error
+      } else {
+        // Real error occurred - log it
+        console.error(
+          "Error adding reset_token column to customers table:",
           error.message
         );
       }
@@ -130,9 +139,12 @@ async function initDatabase() {
       );
       console.log("Added reset_token_expires column to customers table");
     } catch (error) {
-      if (error.code !== "ER_DUP_FIELDNAME") {
-        console.log(
-          "reset_token_expires column already exists or error:",
+      if (error.code === "ER_DUP_FIELDNAME") {
+        // Column already exists - this is expected, suppress the error
+      } else {
+        // Real error occurred - log it
+        console.error(
+          "Error adding reset_token_expires column to customers table:",
           error.message
         );
       }
@@ -145,8 +157,14 @@ async function initDatabase() {
       );
       console.log("Added password column to customers table");
     } catch (error) {
-      if (error.code !== "ER_DUP_FIELDNAME") {
-        console.log("Password column already exists or error:", error.message);
+      if (error.code === "ER_DUP_FIELDNAME") {
+        // Column already exists - this is expected, suppress the error
+      } else {
+        // Real error occurred - log it
+        console.error(
+          "Error adding password column to customers table:",
+          error.message
+        );
       }
     }
 
@@ -176,9 +194,12 @@ async function initDatabase() {
       );
       console.log("Added vehicle_type column to vehicles table");
     } catch (error) {
-      if (error.code !== "ER_DUP_FIELDNAME") {
-        console.log(
-          "vehicle_type column already exists or error:",
+      if (error.code === "ER_DUP_FIELDNAME") {
+        // Column already exists - this is expected, suppress the error
+      } else {
+        // Real error occurred - log it
+        console.error(
+          "Error adding vehicle_type column to vehicles table:",
           error.message
         );
       }
@@ -189,8 +210,14 @@ async function initDatabase() {
       await connection.query("ALTER TABLE vehicles ADD COLUMN mileage INT");
       console.log("Added mileage column to vehicles table");
     } catch (error) {
-      if (error.code !== "ER_DUP_FIELDNAME") {
-        console.log("Mileage column already exists or error:", error.message);
+      if (error.code === "ER_DUP_FIELDNAME") {
+        // Column already exists - this is expected, suppress the error
+      } else {
+        // Real error occurred - log it
+        console.error(
+          "Error adding mileage column to vehicles table:",
+          error.message
+        );
       }
     }
 
@@ -247,9 +274,12 @@ async function initDatabase() {
       );
       console.log("Added received_by column to orders table");
     } catch (error) {
-      if (error.code !== "ER_DUP_FIELDNAME") {
-        console.log(
-          "received_by column already exists or error:",
+      if (error.code === "ER_DUP_FIELDNAME") {
+        // Column already exists - this is expected, suppress the error
+      } else {
+        // Real error occurred - log it
+        console.error(
+          "Error adding received_by column to orders table:",
           error.message
         );
       }
@@ -283,9 +313,12 @@ async function initDatabase() {
       );
       console.log("Added payment_status column to orders table");
     } catch (error) {
-      if (error.code !== "ER_DUP_FIELDNAME") {
-        console.log(
-          "payment_status column already exists or error:",
+      if (error.code === "ER_DUP_FIELDNAME") {
+        // Column already exists - this is expected, suppress the error
+      } else {
+        // Real error occurred - log it
+        console.error(
+          "Error adding payment_status column to orders table:",
           error.message
         );
       }

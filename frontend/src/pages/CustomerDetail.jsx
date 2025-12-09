@@ -21,10 +21,15 @@ const CustomerDetail = () => {
   const fetchCustomerData = async () => {
     try {
       setLoading(true);
+      
+      // Get token for authentication (admin or customer token)
+      const token = localStorage.getItem("token") || localStorage.getItem("customerToken");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      
       const [customerRes, vehiclesRes, ordersRes] = await Promise.all([
-        axios.get(`http://localhost:5000/api/customers/${id}`),
-        axios.get(`http://localhost:5000/api/customers/${id}/vehicles`),
-        axios.get(`http://localhost:5000/api/customers/${id}/orders`),
+        axios.get(`http://localhost:5000/api/customers/${id}`, { headers }),
+        axios.get(`http://localhost:5000/api/customers/${id}/vehicles`, { headers }),
+        axios.get(`http://localhost:5000/api/customers/${id}/orders`, { headers }),
       ]);
 
       setCustomer(customerRes.data.customer);
@@ -32,6 +37,10 @@ const CustomerDetail = () => {
       setOrders(ordersRes.data.orders);
     } catch (error) {
       console.error("Error fetching customer data:", error);
+      // If customer not found, set customer to null to show error message
+      if (error.response?.status === 404) {
+        setCustomer(null);
+      }
     } finally {
       setLoading(false);
     }

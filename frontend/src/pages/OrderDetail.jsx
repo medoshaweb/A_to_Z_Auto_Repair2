@@ -38,6 +38,9 @@ const OrderDetail = () => {
     setIsCustomer(!!customerToken);
   }, [id]);
 
+  // Check if user is admin (has admin token)
+  const isAdmin = !!localStorage.getItem("token");
+
   const fetchOrderData = async () => {
     try {
       setLoading(true);
@@ -401,6 +404,51 @@ const OrderDetail = () => {
                   </p>
                 </div>
               </div>
+
+              {/* Payment Information Section (for admins) */}
+              {isAdmin && (
+                <div className="detail-section">
+                  <h3 className="section-title">Payment Information</h3>
+                  <div className="info-box">
+                    <p>
+                      <strong>Payment Status:</strong>
+                      <span
+                        className={`payment-badge payment-${
+                          order.payment_status || "pending"
+                        }`}
+                      >
+                        {order.payment_status === "paid" ? "Paid" : "Pending"}
+                      </span>
+                    </p>
+                    <p>
+                      <strong>Total Amount:</strong> $
+                      {parseFloat(order.total_amount || 0).toFixed(2)}
+                    </p>
+                    {order.payment_status === "paid" ? (
+                      <p
+                        style={{
+                          color: "var(--text-secondary)",
+                          fontSize: "14px",
+                          marginTop: "10px",
+                        }}
+                      >
+                        ✓ Payment completed for this order
+                      </p>
+                    ) : (
+                      <p
+                        style={{
+                          color: "var(--text-secondary)",
+                          fontSize: "14px",
+                          marginTop: "10px",
+                        }}
+                      >
+                        ⏳ Payment pending - Customer will be able to pay when
+                        viewing this order
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Payment Button (for customers only) */}
               {isCustomer &&

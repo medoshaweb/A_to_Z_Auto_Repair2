@@ -16,6 +16,8 @@ const CustomerNewOrder = () => {
   const [selectedVehicle, setSelectedVehicle] = useState("");
   const [selectedServices, setSelectedServices] = useState([]);
   const [description, setDescription] = useState("");
+  const [preferredDate, setPreferredDate] = useState("");
+  const [preferredTime, setPreferredTime] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -70,6 +72,11 @@ const CustomerNewOrder = () => {
       return;
     }
 
+    if (!preferredDate || !preferredTime) {
+      setError("Please select your preferred service date and time");
+      return;
+    }
+
     if (selectedServices.length === 0 && !description.trim()) {
       setError("Please select at least one service or provide a description");
       return;
@@ -80,20 +87,28 @@ const CustomerNewOrder = () => {
     try {
       // Convert service_ids to integers if they're strings
       const serviceIds = selectedServices.map((id) => parseInt(id));
+      const scheduleNote = `Preferred service schedule: ${preferredDate} at ${preferredTime}`;
+      const finalDescription = [description.trim(), scheduleNote]
+        .filter(Boolean)
+        .join("\n\n");
 
       console.log("Sending request with:", {
         customer_id: customer.id,
         vehicle_id: selectedVehicle ? parseInt(selectedVehicle) : null,
-        description: description || null,
+        description: finalDescription || null,
         service_ids: serviceIds.length > 0 ? serviceIds : null,
+        preferred_date: preferredDate,
+        preferred_time: preferredTime,
       });
 
       // Create the order - backend will use authenticated customer from token
       const orderResponse = await ordersAPI.create({
         customer_id: customer.id,
         vehicle_id: selectedVehicle ? parseInt(selectedVehicle) : null,
-        description: description || null,
+        description: finalDescription || null,
         service_ids: serviceIds.length > 0 ? serviceIds : null,
+        preferred_date: preferredDate,
+        preferred_time: preferredTime,
       });
 
       console.log("Order created successfully:", orderResponse);
@@ -182,6 +197,39 @@ const CustomerNewOrder = () => {
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* Preferred Schedule */}
+              <div className="form-section">
+                <h3>Schedule Your Visit</h3>
+                <p className="helper-text">
+                  Choose the date and time you want to bring your vehicle in.
+                </p>
+                <div className="schedule-grid">
+                  <div className="form-group">
+                    <label htmlFor="preferredDate">Preferred Date</label>
+                    <input
+                      id="preferredDate"
+                      type="date"
+                      className="form-input"
+                      value={preferredDate}
+                      onChange={(e) => setPreferredDate(e.target.value)}
+                      required
+                      min={new Date().toISOString().split("T")[0]}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="preferredTime">Preferred Time</label>
+                    <input
+                      id="preferredTime"
+                      type="time"
+                      className="form-input"
+                      value={preferredTime}
+                      onChange={(e) => setPreferredTime(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
               </div>
               {/* Description */}
               <div className="form-section">

@@ -103,6 +103,25 @@
   transition: color 0.3s ease, background-color 0.3s ease;
 }
 
+.helper-text {
+  margin: 0 0 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 /* Services Grid - Fixed to prevent overlapping */
 .services-grid {
   display: grid;

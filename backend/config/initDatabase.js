@@ -400,7 +400,7 @@ async function initDatabase() {
       const defaultServices = [
         [
           "Oil change",
-          "Every 5,000 kilometres or so, you need to change the oil in your car to keep your engine in the best possible shape.",
+          "Every 5,000 miles or so, you need to change the oil in your car to keep your engine in the best possible shape.",
         ],
         [
           "Spark Plug replacement",
@@ -427,7 +427,7 @@ async function initDatabase() {
           "A car's ignition system includes its battery, starter, and the ignition itself.",
         ],
         [
-          "Programing the camera software",
+          "Programming the camera software",
           "Programming and updating camera software for vehicle safety systems.",
         ],
       ];

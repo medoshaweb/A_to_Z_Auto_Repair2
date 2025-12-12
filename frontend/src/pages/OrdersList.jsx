@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
-import AdminSidebar from '../components/AdminSidebar';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import './OrdersList.css';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { ordersAPI } from "../api";
+import AdminSidebar from "../components/AdminSidebar";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import toast from "react-hot-toast";
+import "./OrdersList.css";
 
 const OrdersList = () => {
   const [orders, setOrders] = useState([]);
@@ -17,10 +18,30 @@ const OrdersList = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/orders');
-      setOrders(response.data.orders);
+      const response = await ordersAPI.getAll();
+      console.log("Orders API response:", response);
+      if (response && response.orders) {
+        setOrders(response.orders);
+        if (response.orders.length === 0) {
+          toast.success("No orders found");
+        }
+      } else if (Array.isArray(response)) {
+        // Handle case where response is directly an array
+        setOrders(response);
+        if (response.length === 0) {
+          toast.success("No orders found");
+        }
+      } else {
+        console.error("Unexpected response structure:", response);
+        toast.error("Unexpected response format from server");
+        setOrders([]);
+      }
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error("Error fetching orders:", error);
+      console.error("Error details:", error.response || error.message);
+      const errorMessage = error.response?.data?.message || error.message || "Failed to fetch orders";
+      toast.error(errorMessage);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -64,6 +85,7 @@ const OrdersList = () => {
                     <th>Vehicle</th>
                     <th>Order Date</th>
                     <th>Received by</th>
+                    <th>Assigned To</th>
                     <th>Order status</th>
                     <th>View/Edit</th>
                   </tr>
@@ -71,7 +93,7 @@ const OrdersList = () => {
                 <tbody>
                   {orders.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="no-data">No orders found</td>
+                      <td colSpan="8" className="no-data">No orders found</td>
                     </tr>
                   ) : (
                     orders.map((order) => (
@@ -104,6 +126,11 @@ const OrdersList = () => {
                         </td>
                         <td>{formatDate(order.created_at)}</td>
                         <td>{order.received_by || 'Admin'}</td>
+                        <td>
+                          {order.assigned_first_name
+                            ? `${order.assigned_first_name} ${order.assigned_last_name || ""}`.trim()
+                            : "Unassigned"}
+                        </td>
                         <td>
                           <span className={`status-badge ${getStatusClass(order.status)}`}>
                             {order.status || 'Received'}

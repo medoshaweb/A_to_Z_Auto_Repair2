@@ -6,6 +6,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import PaymentModal from "../components/PaymentModal";
 import toast from "react-hot-toast";
+import { employeesAPI } from "../api";
 import "./OrderDetail.css";
 
 const OrderDetail = () => {
@@ -17,6 +18,7 @@ const OrderDetail = () => {
   const [order, setOrder] = useState(null);
   const [services, setServices] = useState([]);
   const [vehicles, setVehicles] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -29,6 +31,9 @@ const OrderDetail = () => {
     status: "Received",
     selectedServices: [],
     vehicle_id: null,
+    assigned_employee_id: null,
+    completion_note: "",
+    received_by: "",
   });
 
   useEffect(() => {
@@ -38,8 +43,18 @@ const OrderDetail = () => {
     setIsCustomer(!!customerToken);
   }, [id]);
 
-  // Check if user is admin (has admin token)
+  // Check role (admin/manager/employee)
   const isAdmin = !!localStorage.getItem("token");
+  const userRole = (() => {
+    try {
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw).role || "Admin" : "Admin";
+    } catch {
+      return "Admin";
+    }
+  })();
+  const isManager = userRole === "Manager";
+  const isEmployee = userRole === "Employee";
 
   const fetchOrderData = async () => {
     try {
@@ -74,6 +89,9 @@ const OrderDetail = () => {
           ? orderData.services.map((s) => s.id)
           : [],
         vehicle_id: orderData.vehicle_id,
+        assigned_employee_id: orderData.assigned_employee_id || "",
+        completion_note: orderData.completion_note || "",
+        received_by: orderData.received_by || "",
       });
     } catch (error) {
       console.error("Error fetching order data:", error);
@@ -82,6 +100,22 @@ const OrderDetail = () => {
       setLoading(false);
     }
   };
+
+  // Fetch employees for assignment (Admin/Manager only)
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = await employeesAPI.getAll();
+        setEmployees(res.employees || []);
+      } catch (err) {
+        console.error("Error fetching employees:", err);
+      }
+    };
+
+    if ((isAdmin || isManager) && !isEmployee) {
+      fetchEmployees();
+    }
+  }, [isAdmin, isManager, isEmployee]);
 
   const handleServiceToggle = (serviceId) => {
     setFormData((prev) => ({
@@ -113,6 +147,12 @@ const OrderDetail = () => {
         status: formData.status,
         service_ids: formData.selectedServices,
         vehicle_id: formData.vehicle_id,
+        assigned_employee_id:
+          formData.assigned_employee_id === ""
+            ? null
+            : parseInt(formData.assigned_employee_id),
+        completion_note: formData.completion_note || "",
+        received_by: formData.received_by || "",
       };
 
       await axios.put(`http://localhost:5000/api/orders/${id}`, updateData);
@@ -275,19 +315,72 @@ const OrderDetail = () => {
                 </div>
               </div>
 
-              {/* Status */}
+              {/* Assignment & Receiver */}
+              {(isAdmin || isManager) && (
+                <div className="form-section">
+                  <h3 className="section-title">Assignment</h3>
+                  <div className="assignment-grid">
+                    <div className="form-group">
+                      <label>Received By</label>
+                      <input
+                        type="text"
+                        name="received_by"
+                        value={formData.received_by}
+                        onChange={handleChange}
+                        className="form-input"
+                        placeholder="e.g. Customer Representative"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Assign Technician/Employee</label>
+                      <select
+                        name="assigned_employee_id"
+                        value={formData.assigned_employee_id || ""}
+                        onChange={handleChange}
+                        className="form-select"
+                      >
+                        <option value="">Unassigned</option>
+                        {employees.map((emp) => (
+                          <option key={emp.id} value={emp.id}>
+                            {emp.first_name} {emp.last_name} ({emp.role || "Employee"})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Status & Completion */}
               <div className="form-section">
                 <h3 className="section-title">Order Status</h3>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  className="form-select"
-                >
-                  <option value="Received">Received</option>
-                  <option value="In progress">In progress</option>
-                  <option value="Completed">Completed</option>
-                </select>
+                <div className="assignment-grid">
+                  <div className="form-group">
+                    <label>Status</label>
+                    <select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleChange}
+                      className="form-select"
+                    >
+                      <option value="Received">Received</option>
+                      <option value="In progress">In progress</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Completion Note</label>
+                    <textarea
+                      name="completion_note"
+                      value={formData.completion_note}
+                      onChange={handleChange}
+                      className="form-textarea"
+                      rows="3"
+                      placeholder="What was done, parts used, etc."
+                      disabled={isEmployee && formData.status !== "Completed"}
+                    />
+                  </div>
+                </div>
               </div>
 
               <button type="submit" className="submit-button" disabled={saving}>
@@ -398,6 +491,27 @@ const OrderDetail = () => {
                   </p>
                   <p>
                     <strong>Received by:</strong> {order.received_by || "Admin"}
+                  </p>
+                  <p>
+                    <strong>Assigned To:</strong>{" "}
+                    {order.assigned_first_name ? (
+                      <>
+                        {order.assigned_first_name} {order.assigned_last_name || ""} (
+                        {order.assigned_role || "Employee"})
+                      </>
+                    ) : (
+                      "Unassigned"
+                    )}
+                  </p>
+                  <p>
+                    <strong>Completion Note:</strong>{" "}
+                    {order.completion_note || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Completed At:</strong>{" "}
+                    {order.completed_at
+                      ? new Date(order.completed_at).toLocaleString()
+                      : "N/A"}
                   </p>
                   <p>
                     <strong>Order Date:</strong> {formatDate(order.created_at)}

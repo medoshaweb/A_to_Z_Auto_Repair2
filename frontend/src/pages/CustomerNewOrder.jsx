@@ -32,19 +32,60 @@ const CustomerNewOrder = () => {
     fetchData();
   }, [customer, token]);
 
+  // Reset recommendation application and clear selections when navigation state changes
+  useEffect(() => {
+    setAppliedRecommendation(false);
+    // Clear previously selected services when a new recommendation comes in
+    if (recommendedService) {
+      setSelectedServices([]);
+    }
+  }, [recommendedService]);
+
   // Auto-select recommended service if user came from dashboard recommendation
   useEffect(() => {
     if (!services.length || !recommendedService || appliedRecommendation)
       return;
-    const match = services.find(
-      (svc) => svc.name.toLowerCase() === recommendedService.toLowerCase()
+
+    // Normalize service names for better matching (trim, lowercase, remove extra spaces)
+    const normalize = (str) => str.trim().toLowerCase().replace(/\s+/g, " ");
+
+    const normalizedRecommended = normalize(recommendedService);
+
+    // Try exact match first
+    let match = services.find(
+      (svc) => normalize(svc.name) === normalizedRecommended
     );
+
+    // If no exact match, try partial match (recommended service contains service name or vice versa)
+    if (!match) {
+      match = services.find((svc) => {
+        const normalizedSvcName = normalize(svc.name);
+        return (
+          normalizedSvcName.includes(normalizedRecommended) ||
+          normalizedRecommended.includes(normalizedSvcName)
+        );
+      });
+    }
+
     if (match) {
-      setSelectedServices((prev) =>
-        prev.includes(match.id) ? prev : [...prev, match.id]
-      );
+      setSelectedServices([match.id]);
       setAppliedRecommendation(true);
-      toast.success(`Added recommended service: ${match.name}`);
+      toast.success(`Selected recommended service: ${match.name}`);
+      console.log(
+        "Auto-selected service:",
+        match.name,
+        "from recommendation:",
+        recommendedService
+      );
+    } else {
+      console.warn(
+        "Could not find matching service for recommendation:",
+        recommendedService
+      );
+      console.log(
+        "Available services:",
+        services.map((s) => s.name)
+      );
     }
   }, [services, recommendedService, appliedRecommendation]);
 

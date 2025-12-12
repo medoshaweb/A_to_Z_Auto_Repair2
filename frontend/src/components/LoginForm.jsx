@@ -34,8 +34,12 @@ const LoginForm = () => {
       );
 
       // Store token in localStorage
+      const role = response.user?.role || "Admin";
       localStorage.setItem("token", response.token);
-      localStorage.setItem("user", JSON.stringify(response.user));
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ ...response.user, role })
+      );
 
       // Show success message
       toast.success("Login successful!");

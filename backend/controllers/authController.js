@@ -31,9 +31,23 @@ const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    // Try to look up matching employee to capture role (default to Admin)
+    let role = "Admin";
+    try {
+      const [employeeRows] = await pool.execute(
+        "SELECT id, role FROM employees WHERE email = ? LIMIT 1",
+        [email]
+      );
+      if (employeeRows.length > 0) {
+        role = employeeRows[0].role || "Admin";
+      }
+    } catch (lookupError) {
+      console.warn("Employee role lookup failed, defaulting to Admin", lookupError);
+    }
+
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: user.id, email: user.email, role },
       process.env.JWT_SECRET || "your_jwt_secret_key_here",
       { expiresIn: "24h" }
     );
@@ -45,6 +59,7 @@ const login = async (req, res) => {
         id: user.id,
         email: user.email,
         name: user.name,
+        role,
       },
     });
   } catch (error) {
@@ -85,9 +100,11 @@ const register = async (req, res) => {
       [email, hashedPassword, name || null]
     );
 
+    const role = "Admin"; // default role for new admin users
+
     // Generate JWT token
     const token = jwt.sign(
-      { userId: result.insertId, email: email },
+      { userId: result.insertId, email: email, role },
       process.env.JWT_SECRET || "your_jwt_secret_key_here",
       { expiresIn: "24h" }
     );
@@ -99,6 +116,7 @@ const register = async (req, res) => {
         id: result.insertId,
         email: email,
         name: name || null,
+        role,
       },
     });
   } catch (error) {
@@ -261,7 +279,12 @@ const getMe = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json({ user: users[0] });
+    res.json({
+      user: {
+        ...users[0],
+        role: decoded.role || "Admin",
+      },
+    });
   } catch (error) {
     console.error("Get user error:", error);
     res.status(500).json({ message: "Server error" });

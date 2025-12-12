@@ -98,11 +98,21 @@ function CustomerLoginPage() {
 
 function AdminPrivateRoute({ children }) {
   const token = localStorage.getItem("token");
-  const user = localStorage.getItem("user");
+  const rawUser = localStorage.getItem("user");
+  const parsedUser = rawUser ? JSON.parse(rawUser) : null;
+  const role = parsedUser?.role || "Admin";
+
   // Check for admin token (not customer token)
-  if (!token || !user) {
+  if (!token || !parsedUser) {
     return <Navigate to="/admin/login" replace />;
   }
+
+  // Allow Admin, Manager, Employee into admin area
+  const allowedRoles = ["Admin", "Manager", "Employee"];
+  if (!allowedRoles.includes(role)) {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 }
 

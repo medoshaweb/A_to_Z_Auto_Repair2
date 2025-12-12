@@ -4,6 +4,39 @@
   box-sizing: border-box;
 }
 
+/* Ensure all page containers allow sticky positioning */
+[class*="-page"],
+[class*="page"] {
+  overflow: visible !important;
+  position: relative;
+  contain: none;
+}
+
+/* Ensure root element allows sticky */
+#root {
+  width: 100%;
+  min-height: 100vh;
+  overflow: visible;
+  position: relative;
+  contain: none;
+}
+
+/* Ensure Router and all React components don't break sticky */
+div[role="group"],
+div[data-reactroot],
+div[data-router] {
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  position: relative !important;
+}
+
+/* Ensure all router wrappers don't break sticky */
+main,
+section,
+article {
+  overflow: visible !important;
+}
+
 :root {
   /* Light theme colors */
   --bg-primary: #ffffff;
@@ -15,11 +48,11 @@
   --text-tertiary: #999999;
   --border-color: #dddddd;
   --shadow: rgba(0, 0, 0, 0.1);
-  --accent-color: #1E3A8A;
+  --accent-color: #1e3a8a;
   --accent-hover: #1e40af;
 }
 
-[data-theme='dark'] {
+[data-theme="dark"] {
   /* Dark theme colors */
   --bg-primary: #1a1a1a;
   --bg-secondary: #2d2d2d;
@@ -37,12 +70,18 @@
 html {
   background-color: var(--bg-primary);
   transition: background-color 0.3s ease;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: visible;
 }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -50,9 +89,15 @@ body {
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
   min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: auto;
+  height: auto;
+  position: relative;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }

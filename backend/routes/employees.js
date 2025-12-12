@@ -7,6 +7,12 @@ const {
   updateEmployee,
   deleteEmployee,
 } = require("../controllers/employeesController");
+const authenticateToken = require("../middleware/auth");
+const authorizeRoles = require("../middleware/authorizeRoles");
+
+// Protect all employee routes with auth + Admin only
+router.use(authenticateToken);
+router.use(authorizeRoles("Admin"));
 
 // Get all employees
 router.get("/", getAllEmployees);

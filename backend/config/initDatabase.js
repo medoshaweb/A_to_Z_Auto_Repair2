@@ -306,6 +306,49 @@ async function initDatabase() {
     `);
     console.log("Order_services table created or already exists");
 
+    // Add assignment and completion tracking columns to orders if they don't exist
+    try {
+      await connection.query(
+        "ALTER TABLE orders ADD COLUMN assigned_employee_id INT NULL"
+      );
+      console.log("Added assigned_employee_id column to orders table");
+    } catch (error) {
+      if (error.code !== "ER_DUP_FIELDNAME") {
+        console.error(
+          "Error adding assigned_employee_id column to orders table:",
+          error.message
+        );
+      }
+    }
+
+    try {
+      await connection.query(
+        "ALTER TABLE orders ADD COLUMN completion_note TEXT NULL"
+      );
+      console.log("Added completion_note column to orders table");
+    } catch (error) {
+      if (error.code !== "ER_DUP_FIELDNAME") {
+        console.error(
+          "Error adding completion_note column to orders table:",
+          error.message
+        );
+      }
+    }
+
+    try {
+      await connection.query(
+        "ALTER TABLE orders ADD COLUMN completed_at DATETIME NULL"
+      );
+      console.log("Added completed_at column to orders table");
+    } catch (error) {
+      if (error.code !== "ER_DUP_FIELDNAME") {
+        console.error(
+          "Error adding completed_at column to orders table:",
+          error.message
+        );
+      }
+    }
+
     // Add payment_status column to orders if it doesn't exist (migration)
     try {
       await connection.query(

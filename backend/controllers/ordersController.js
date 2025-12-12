@@ -26,6 +26,9 @@ const getAllOrders = async (req, res) => {
         o.total_amount,
         o.payment_status,
         o.received_by,
+        o.assigned_employee_id,
+        o.completion_note,
+        o.completed_at,
         o.created_at,
         o.updated_at,
         c.first_name,
@@ -38,10 +41,15 @@ const getAllOrders = async (req, res) => {
         v.license_plate,
         v.vin,
         v.color,
-        v.mileage
+        v.mileage,
+        e.first_name AS assigned_first_name,
+        e.last_name AS assigned_last_name,
+        e.email AS assigned_email,
+        e.role AS assigned_role
       FROM orders o
       LEFT JOIN customers c ON o.customer_id = c.id
       LEFT JOIN vehicles v ON o.vehicle_id = v.id
+      LEFT JOIN employees e ON o.assigned_employee_id = e.id
       ORDER BY o.created_at DESC
     `);
 
@@ -85,10 +93,15 @@ const getOrderById = async (req, res) => {
         v.license_plate,
         v.vin,
         v.color,
-        v.mileage
+        v.mileage,
+        e.first_name AS assigned_first_name,
+        e.last_name AS assigned_last_name,
+        e.email AS assigned_email,
+        e.role AS assigned_role
       FROM orders o
       LEFT JOIN customers c ON o.customer_id = c.id
       LEFT JOIN vehicles v ON o.vehicle_id = v.id
+      LEFT JOIN employees e ON o.assigned_employee_id = e.id
       WHERE o.id = ?
     `,
       [id]
@@ -253,7 +266,11 @@ const updateOrder = async (req, res) => {
       service_ids,
       status,
       received_by,
+      assigned_employee_id,
+      completion_note,
     } = req.body;
+
+    const role = req.user?.role || "Admin";
 
     // Check if order exists
     const [existing] = await connection.execute(
@@ -265,36 +282,56 @@ const updateOrder = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Update order
-    await connection.execute(
-      `UPDATE orders 
-       SET customer_id = ?, vehicle_id = ?, description = ?, total_amount = ?, status = ?, received_by = ?
-       WHERE id = ?`,
-      [
-        customer_id || existing[0].customer_id,
-        vehicle_id !== undefined ? vehicle_id : existing[0].vehicle_id,
-        description !== undefined ? description : existing[0].description,
-        price !== undefined ? price : existing[0].total_amount,
-        status || existing[0].status,
-        received_by || existing[0].received_by,
-        id,
-      ]
-    );
+    // Employees can only update status
+    if (role === "Employee") {
+      if (!status) {
+        await connection.rollback();
+        return res
+          .status(403)
+          .json({ message: "Employees can only update order status" });
+      }
 
-    // Update services if provided
-    if (service_ids && Array.isArray(service_ids)) {
-      // Delete existing services
       await connection.execute(
-        "DELETE FROM order_services WHERE order_id = ?",
-        [id]
+        `UPDATE orders 
+         SET status = ?, completion_note = ?, completed_at = CASE WHEN ? = 'Completed' THEN NOW() ELSE completed_at END
+         WHERE id = ?`,
+        [status, completion_note || existing[0].completion_note, status, id]
+      );
+    } else {
+      // Admin / Manager can edit full order
+      await connection.execute(
+        `UPDATE orders 
+         SET customer_id = ?, vehicle_id = ?, description = ?, total_amount = ?, status = ?, received_by = ?, assigned_employee_id = ?, completion_note = ?, completed_at = CASE WHEN ? = 'Completed' THEN NOW() ELSE completed_at END
+         WHERE id = ?`,
+        [
+          customer_id || existing[0].customer_id,
+          vehicle_id !== undefined ? vehicle_id : existing[0].vehicle_id,
+          description !== undefined ? description : existing[0].description,
+          price !== undefined ? price : existing[0].total_amount,
+          status || existing[0].status,
+          received_by || existing[0].received_by,
+          assigned_employee_id || null,
+          completion_note || existing[0].completion_note,
+          status || existing[0].status,
+          id,
+        ]
       );
 
-      // Add new services
-      for (const serviceId of service_ids) {
+      // Update services if provided
+      if (service_ids && Array.isArray(service_ids)) {
+        // Delete existing services
         await connection.execute(
-          "INSERT INTO order_services (order_id, service_id) VALUES (?, ?)",
-          [id, serviceId]
+          "DELETE FROM order_services WHERE order_id = ?",
+          [id]
         );
+
+        // Add new services
+        for (const serviceId of service_ids) {
+          await connection.execute(
+            "INSERT INTO order_services (order_id, service_id) VALUES (?, ?)",
+            [id, serviceId]
+          );
+        }
       }
     }
 

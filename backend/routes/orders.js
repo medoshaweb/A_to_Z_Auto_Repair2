@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const authenticateCustomer = require("../middleware/customerAuth");
+const authenticateToken = require("../middleware/auth");
+const authorizeRoles = require("../middleware/authorizeRoles");
 const {
   getAllOrders,
   getOrderById,
@@ -9,19 +11,33 @@ const {
   addServiceToOrder,
 } = require("../controllers/ordersController");
 
-// Get all orders with customer and vehicle info
-router.get("/", getAllOrders);
+// Admin/staff routes (Admin, Manager, Employee)
+router.get(
+  "/",
+  authenticateToken,
+  authorizeRoles("Admin", "Manager", "Employee"),
+  getAllOrders
+);
 
-// Get single order by ID
-router.get("/:id", getOrderById);
+router.get(
+  "/:id",
+  authenticateToken,
+  authorizeRoles("Admin", "Manager", "Employee"),
+  getOrderById
+);
 
-// Create new order - NOW PROTECTED
+// Create new order (customer flow)
 router.post("/", authenticateCustomer, createOrder);
 
-// Update order
-router.put("/:id", updateOrder);
+// Update order (Admin, Manager, Employee - but employees limited in controller)
+router.put(
+  "/:id",
+  authenticateToken,
+  authorizeRoles("Admin", "Manager", "Employee"),
+  updateOrder
+);
 
-// Add service to order - NOW PROTECTED
+// Add service to order - customer flow
 router.post("/:id/services", authenticateCustomer, addServiceToOrder);
 
 module.exports = router;

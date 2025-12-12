@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import { employeesAPI } from "../api";
 import AdminSidebar from "../components/AdminSidebar";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import toast from "react-hot-toast";
 import "./EmployeesList.css";
 
 const EmployeesList = () => {
@@ -17,10 +18,31 @@ const EmployeesList = () => {
 
   const fetchEmployees = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/employees");
-      setEmployees(response.data.employees);
+      setLoading(true);
+      const response = await employeesAPI.getAll();
+      console.log("Employees API response:", response);
+      if (response && response.employees) {
+        setEmployees(response.employees);
+        if (response.employees.length === 0) {
+          toast.success("No employees found");
+        }
+      } else if (Array.isArray(response)) {
+        // Handle case where response is directly an array
+        setEmployees(response);
+        if (response.length === 0) {
+          toast.success("No employees found");
+        }
+      } else {
+        console.error("Unexpected response structure:", response);
+        toast.error("Unexpected response format from server");
+        setEmployees([]);
+      }
     } catch (error) {
       console.error("Error fetching employees:", error);
+      console.error("Error details:", error.response || error.message);
+      const errorMessage = error.response?.data?.message || error.message || "Failed to fetch employees";
+      toast.error(errorMessage);
+      setEmployees([]);
     } finally {
       setLoading(false);
     }
@@ -32,7 +54,7 @@ const EmployeesList = () => {
     }
 
     try {
-      await axios.delete(`http://localhost:5000/api/employees/${id}`);
+      await employeesAPI.delete(id);
       alert("Employee deleted successfully!");
       fetchEmployees();
     } catch (error) {

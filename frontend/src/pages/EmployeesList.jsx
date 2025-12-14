@@ -19,18 +19,44 @@ const EmployeesList = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
+      console.log("Fetching employees...");
       const response = await employeesAPI.getAll();
-      console.log("Employees API response:", response);
-      if (response && response.employees) {
-        setEmployees(response.employees);
-        if (response.employees.length === 0) {
-          toast.success("No employees found");
+      console.log("Employees API response (full):", JSON.stringify(response, null, 2));
+      console.log("Response type:", typeof response);
+      console.log("Is array?", Array.isArray(response));
+      console.log("Has employees property?", response?.employees);
+      console.log("Employees value:", response?.employees);
+      
+      // Handle different response structures
+      if (response && response.employees !== undefined) {
+        // Standard response: { employees: [...] }
+        const employeesList = Array.isArray(response.employees) ? response.employees : [];
+        console.log(`Setting ${employeesList.length} employees`);
+        setEmployees(employeesList);
+        if (employeesList.length === 0) {
+          toast.info("No employees found in database");
+        } else {
+          toast.success(`Loaded ${employeesList.length} employee(s)`);
         }
       } else if (Array.isArray(response)) {
-        // Handle case where response is directly an array
+        // Response is directly an array
+        console.log(`Setting ${response.length} employees from array`);
         setEmployees(response);
         if (response.length === 0) {
-          toast.success("No employees found");
+          toast.info("No employees found in database");
+        } else {
+          toast.success(`Loaded ${response.length} employee(s)`);
+        }
+      } else if (response && typeof response === 'object') {
+        // Check if response has data property
+        if (response.data && Array.isArray(response.data)) {
+          console.log(`Setting ${response.data.length} employees from data property`);
+          setEmployees(response.data);
+        } else {
+          console.error("Unexpected response structure:", response);
+          console.error("Response keys:", Object.keys(response || {}));
+          toast.error("Unexpected response format from server");
+          setEmployees([]);
         }
       } else {
         console.error("Unexpected response structure:", response);
@@ -38,10 +64,58 @@ const EmployeesList = () => {
         setEmployees([]);
       }
     } catch (error) {
-      console.error("Error fetching employees:", error);
-      console.error("Error details:", error.response || error.message);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to fetch employees";
-      toast.error(errorMessage);
+      // Safe error logging
+      try {
+        console.error("Error fetching employees:", error);
+        if (error.response) {
+          console.error("Error response status:", error.response.status);
+          console.error("Error response data:", error.response.data);
+        }
+        if (error.message) {
+          console.error("Error message:", error.message);
+        }
+      } catch (logError) {
+        console.error("Error logging failed:", logError);
+      }
+      
+      // More detailed error handling
+      let errorMessage = "Failed to fetch employees";
+      let showLogoutPrompt = false;
+      
+      if (error.response) {
+        if (error.response.status === 401) {
+          errorMessage = "Unauthorized. Please log out and log back in.";
+          showLogoutPrompt = true;
+        } else if (error.response.status === 403) {
+          const responseData = error.response.data || {};
+          const details = responseData.details || "";
+          const debug = responseData.debug || {};
+          const userInfo = JSON.parse(localStorage.getItem("user") || "{}");
+          
+          errorMessage = `Access denied. Admin role required. ${details}`;
+          showLogoutPrompt = true;
+          
+          console.error("403 Forbidden Details:");
+          console.error("  - Your role in localStorage:", userInfo.role);
+          console.error("  - Your role in token:", debug.roleFromToken || "unknown");
+          console.error("  - Required roles:", debug.allowedRoles || ["Admin"]);
+          console.error("  - Full debug info:", JSON.stringify(debug, null, 2));
+          console.error("  - Full user object:", localStorage.getItem("user"));
+          console.error("\n⚠️ SOLUTION: Please log out and log back in to refresh your token with the correct role.");
+        } else if (error.response.status === 500) {
+          errorMessage = "Server error. Please try again later.";
+        } else {
+          errorMessage = responseData.message || responseData.error || errorMessage;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      if (showLogoutPrompt) {
+        errorMessage += "\n\nPlease log out and log back in to refresh your authentication token.";
+      }
+      
+      toast.error(errorMessage, { duration: 7000 });
       setEmployees([]);
     } finally {
       setLoading(false);
@@ -78,13 +152,32 @@ const EmployeesList = () => {
       <div className="page-content">
         <AdminSidebar />
         <main className="main-admin-content">
-          <h1 className="page-title">
-            Employees
-            <span className="title-underline"></span>
-          </h1>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+            <h1 className="page-title" style={{ margin: 0 }}>
+              Employees
+              <span className="title-underline"></span>
+            </h1>
+            <button
+              onClick={fetchEmployees}
+              disabled={loading}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#1e3a8a",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: loading ? "not-allowed" : "pointer",
+                fontSize: "14px"
+              }}
+            >
+              {loading ? "Refreshing..." : "🔄 Refresh"}
+            </button>
+          </div>
 
           {loading ? (
-            <div className="loading">Loading...</div>
+            <div className="loading" style={{ textAlign: "center", padding: "40px", fontSize: "18px" }}>
+              Loading employees...
+            </div>
           ) : (
             <div className="table-container">
               <table className="employees-table">
@@ -103,8 +196,13 @@ const EmployeesList = () => {
                 <tbody>
                   {employees.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="empty-message">
-                        No employees found
+                      <td colSpan="8" className="empty-message" style={{ textAlign: "center", padding: "40px", fontSize: "16px", color: "#666" }}>
+                        <div>
+                          <p style={{ marginBottom: "10px" }}>No employees found in the database.</p>
+                          <p style={{ fontSize: "14px", color: "#999" }}>
+                            Click "Add employee" in the sidebar to add your first employee.
+                          </p>
+                        </div>
                       </td>
                     </tr>
                   ) : (

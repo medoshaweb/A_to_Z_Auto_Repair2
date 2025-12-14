@@ -45,6 +45,14 @@ const login = async (req, res) => {
       console.warn("Employee role lookup failed, defaulting to Admin", lookupError);
     }
 
+    // Normalize role: capitalize first letter, lowercase the rest
+    if (typeof role === "string" && role.trim()) {
+      const trimmedRole = role.trim();
+      role = trimmedRole.charAt(0).toUpperCase() + trimmedRole.slice(1).toLowerCase();
+    } else {
+      role = "Admin"; // Default to Admin if role is invalid
+    }
+
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email, role },

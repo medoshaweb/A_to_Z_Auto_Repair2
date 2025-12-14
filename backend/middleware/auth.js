@@ -10,8 +10,10 @@ const authenticateToken = (req, res, next) => {
 
   jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret_key_here', (err, user) => {
     if (err) {
+      console.error("Token verification failed:", err.message);
       return res.status(403).json({ message: 'Invalid or expired token' });
     }
+    console.log("Token verified - User from token:", { userId: user.userId, email: user.email, role: user.role });
     req.user = user;
     next();
   });

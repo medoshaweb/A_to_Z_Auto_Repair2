@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import { employeesAPI } from "../api";
 import AdminSidebar from "../components/AdminSidebar";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import toast from "react-hot-toast";
 import "./EmployeesList.css";
 
 const EditEmployee = () => {
@@ -28,10 +29,8 @@ const EditEmployee = () => {
 
   const fetchEmployee = async () => {
     try {
-      const response = await axios.get(
-        `http://localhost:5000/api/employees/${id}`
-      );
-      const employee = response.data.employee;
+      const response = await employeesAPI.getById(id);
+      const employee = response.employee;
       setFormData({
         email: employee.email,
         first_name: employee.first_name,
@@ -43,7 +42,9 @@ const EditEmployee = () => {
       });
     } catch (error) {
       console.error("Error fetching employee:", error);
-      setError("Failed to load employee data");
+      const errorMessage = error.response?.data?.message || error.message || "Failed to load employee data";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setFetching(false);
     }
@@ -70,14 +71,13 @@ const EditEmployee = () => {
         delete updateData.password;
       }
 
-      await axios.put(`http://localhost:5000/api/employees/${id}`, updateData);
-      alert("Employee updated successfully!");
+      await employeesAPI.update(id, updateData);
+      toast.success("Employee updated successfully!");
       navigate("/admin/employees");
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to update employee. Please try again."
-      );
+      const errorMessage = err.response?.data?.message || err.message || "Failed to update employee. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

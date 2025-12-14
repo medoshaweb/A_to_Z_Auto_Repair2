@@ -4,13 +4,18 @@ const bcrypt = require("bcryptjs");
 // Get all employees
 const getAllEmployees = async (req, res) => {
   try {
+    console.log("getAllEmployees called - User role:", req.user?.role, "User email:", req.user?.email);
+    
     const [employees] = await pool.execute(
       "SELECT id, email, first_name, last_name, phone, role, is_active, created_at FROM employees ORDER BY created_at DESC"
     );
+    
+    console.log(`Found ${employees.length} employees in database`);
+    
     res.json({ employees });
   } catch (error) {
     console.error("Get employees error:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 

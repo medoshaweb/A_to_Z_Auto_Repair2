@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { employeesAPI } from "../api";
 import AdminSidebar from "../components/AdminSidebar";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import toast from "react-hot-toast";
 import "./AddEmployee.css";
 
 const AddEmployee = () => {
@@ -44,14 +45,13 @@ const AddEmployee = () => {
     }
 
     try {
-      await axios.post("http://localhost:5000/api/employees", formData);
-      alert("Employee added successfully!");
+      await employeesAPI.create(formData);
+      toast.success("Employee added successfully!");
       navigate("/admin/employees");
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to add employee. Please try again."
-      );
+      const errorMessage = err.response?.data?.message || err.message || "Failed to add employee. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

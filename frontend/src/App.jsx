@@ -39,6 +39,16 @@ import AIChatbot from "./components/AIChatbot";
 function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
 
+  // Check if user is admin (for signup access)
+  const rawUser = localStorage.getItem("user");
+  let isAdmin = false;
+  try {
+    const user = rawUser ? JSON.parse(rawUser) : null;
+    isAdmin = user?.role === "Admin";
+  } catch (e) {
+    // If not logged in or parsing fails, not admin
+  }
+
   return (
     <div className="App">
       <Header />
@@ -51,14 +61,16 @@ function LoginPage() {
             >
               LOGIN
             </button>
-            <button
-              className={`auth-tab ${!isLogin ? "active" : ""}`}
-              onClick={() => setIsLogin(false)}
-            >
-              SIGN UP
-            </button>
+            {isAdmin && (
+              <button
+                className={`auth-tab ${!isLogin ? "active" : ""}`}
+                onClick={() => setIsLogin(false)}
+              >
+                SIGN UP
+              </button>
+            )}
           </div>
-          {isLogin ? <LoginForm /> : <SignupForm />}
+          {isLogin ? <LoginForm /> : isAdmin ? <SignupForm /> : <LoginForm />}
         </div>
       </main>
       <Footer />
@@ -99,18 +111,63 @@ function CustomerLoginPage() {
 function AdminPrivateRoute({ children }) {
   const token = localStorage.getItem("token");
   const rawUser = localStorage.getItem("user");
-  const parsedUser = rawUser ? JSON.parse(rawUser) : null;
-  const role = parsedUser?.role || "Admin";
 
   // Check for admin token (not customer token)
-  if (!token || !parsedUser) {
+  // Only redirect if BOTH token and user are missing
+  // If token exists but user is missing/malformed, still allow (component will handle)
+  if (!token) {
+    console.log("AdminPrivateRoute: No token found, redirecting to login");
     return <Navigate to="/admin/login" replace />;
+  }
+
+  // If token exists but no user object, still allow access
+  // The component can handle authentication errors from API calls
+  if (!rawUser) {
+    console.warn("AdminPrivateRoute: Token exists but no user object");
+    // Still allow - token is the primary authentication
+    return children;
+  }
+
+  // Try to parse user, but don't fail if parsing fails
+  let parsedUser = null;
+  let role = "Admin";
+  try {
+    parsedUser = JSON.parse(rawUser);
+    role = parsedUser?.role || "Admin";
+  } catch (e) {
+    // If parsing fails, still allow access (token exists)
+    console.warn(
+      "AdminPrivateRoute: Failed to parse user from localStorage:",
+      e
+    );
+    // Still allow - token is the primary authentication
+    return children;
+  }
+
+  // Normalize role (capitalize first letter, lowercase rest)
+  if (typeof role === "string" && role.trim()) {
+    const trimmedRole = role.trim();
+    role =
+      trimmedRole.charAt(0).toUpperCase() + trimmedRole.slice(1).toLowerCase();
   }
 
   // Allow Admin, Manager, Employee into admin area
   const allowedRoles = ["Admin", "Manager", "Employee"];
-  if (!allowedRoles.includes(role)) {
-    return <Navigate to="/" replace />;
+  const normalizedRole = role;
+
+  if (!allowedRoles.includes(normalizedRole)) {
+    console.warn(
+      `AdminPrivateRoute: Role "${normalizedRole}" not in allowed roles:`,
+      allowedRoles
+    );
+    // Still allow access if token exists (might be a role formatting issue)
+    // Only redirect if role is clearly not allowed
+    if (
+      !["admin", "manager", "employee"].includes(normalizedRole.toLowerCase())
+    ) {
+      console.log("AdminPrivateRoute: Invalid role, redirecting to home");
+      return <Navigate to="/" replace />;
+    }
   }
 
   return children;

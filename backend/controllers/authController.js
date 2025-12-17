@@ -76,15 +76,40 @@ const login = async (req, res) => {
   }
 };
 
-// Register controller
+// Register controller - ADMIN ONLY
+// Creates both a user (for authentication) and an employee (for role management)
 const register = async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, role, first_name, last_name, phone } = req.body;
 
     if (!email || !password) {
       return res
         .status(400)
         .json({ message: "Email and password are required" });
+    }
+
+    // Parse name into first_name and last_name if name is provided but first_name/last_name are not
+    let firstName = first_name;
+    let lastName = last_name;
+    if (name && !first_name && !last_name) {
+      const nameParts = name.trim().split(/\s+/);
+      firstName = nameParts[0] || "";
+      lastName = nameParts.slice(1).join(" ") || "";
+    }
+
+    // If still no first/last name, use name or require it
+    if (!firstName && !lastName) {
+      if (name) {
+        const nameParts = name.trim().split(/\s+/);
+        firstName = nameParts[0] || "";
+        lastName = nameParts.slice(1).join(" ") || "";
+      }
+    }
+
+    if (!firstName || !lastName) {
+      return res
+        .status(400)
+        .json({ message: "First name and last name are required" });
     }
 
     // Check if user already exists
@@ -99,34 +124,86 @@ const register = async (req, res) => {
         .json({ message: "User with this email already exists" });
     }
 
+    // Check if employee already exists
+    const [existingEmployees] = await pool.execute(
+      "SELECT * FROM employees WHERE email = ?",
+      [email]
+    );
+
+    if (existingEmployees.length > 0) {
+      return res
+        .status(400)
+        .json({ message: "Employee with this email already exists" });
+    }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert new user
-    const [result] = await pool.execute(
-      "INSERT INTO users (email, password, name) VALUES (?, ?, ?)",
-      [email, hashedPassword, name || null]
-    );
+    // Default role to "Employee" if not specified (Admin can specify Admin, Manager, or Employee)
+    const assignedRole = role || "Employee";
+    
+    // Validate role
+    const validRoles = ["Admin", "Manager", "Employee"];
+    if (!validRoles.includes(assignedRole)) {
+      return res
+        .status(400)
+        .json({ message: "Invalid role. Must be Admin, Manager, or Employee" });
+    }
 
-    const role = "Admin"; // default role for new admin users
+    // Use transaction to ensure both inserts succeed or both fail
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: result.insertId, email: email, role },
-      process.env.JWT_SECRET || "your_jwt_secret_key_here",
-      { expiresIn: "24h" }
-    );
+      // Insert new user (for authentication)
+      const [userResult] = await connection.execute(
+        "INSERT INTO users (email, password, name) VALUES (?, ?, ?)",
+        [email, hashedPassword, name || `${firstName} ${lastName}`.trim()]
+      );
 
-    res.status(201).json({
-      message: "User registered successfully",
-      token,
-      user: {
-        id: result.insertId,
-        email: email,
-        name: name || null,
-        role,
-      },
-    });
+      // Insert new employee (for role management)
+      const [employeeResult] = await connection.execute(
+        "INSERT INTO employees (email, password, first_name, last_name, phone, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [
+          email,
+          hashedPassword,
+          firstName,
+          lastName,
+          phone || null,
+          assignedRole,
+          true, // is_active defaults to true
+        ]
+      );
+
+      // Commit transaction if both inserts succeed
+      await connection.commit();
+
+      res.status(201).json({
+        message: "Account created successfully",
+        user: {
+          id: userResult.insertId,
+          email: email,
+          name: name || `${firstName} ${lastName}`.trim(),
+        },
+        employee: {
+          id: employeeResult.insertId,
+          email: email,
+          first_name: firstName,
+          last_name: lastName,
+          phone: phone || null,
+          role: assignedRole,
+          is_active: true,
+        },
+      });
+    } catch (dbError) {
+      // Rollback transaction if any insert fails
+      await connection.rollback();
+      console.error("Database error during registration:", dbError);
+      throw dbError; // Re-throw to be caught by outer catch
+    } finally {
+      // Always release the connection
+      connection.release();
+    }
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({ message: "Server error during registration" });

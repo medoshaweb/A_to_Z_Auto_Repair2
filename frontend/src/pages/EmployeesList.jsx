@@ -21,16 +21,21 @@ const EmployeesList = () => {
       setLoading(true);
       console.log("Fetching employees...");
       const response = await employeesAPI.getAll();
-      console.log("Employees API response (full):", JSON.stringify(response, null, 2));
+      console.log(
+        "Employees API response (full):",
+        JSON.stringify(response, null, 2)
+      );
       console.log("Response type:", typeof response);
       console.log("Is array?", Array.isArray(response));
       console.log("Has employees property?", response?.employees);
       console.log("Employees value:", response?.employees);
-      
+
       // Handle different response structures
       if (response && response.employees !== undefined) {
         // Standard response: { employees: [...] }
-        const employeesList = Array.isArray(response.employees) ? response.employees : [];
+        const employeesList = Array.isArray(response.employees)
+          ? response.employees
+          : [];
         console.log(`Setting ${employeesList.length} employees`);
         setEmployees(employeesList);
         if (employeesList.length === 0) {
@@ -47,10 +52,12 @@ const EmployeesList = () => {
         } else {
           toast.success(`Loaded ${response.length} employee(s)`);
         }
-      } else if (response && typeof response === 'object') {
+      } else if (response && typeof response === "object") {
         // Check if response has data property
         if (response.data && Array.isArray(response.data)) {
-          console.log(`Setting ${response.data.length} employees from data property`);
+          console.log(
+            `Setting ${response.data.length} employees from data property`
+          );
           setEmployees(response.data);
         } else {
           console.error("Unexpected response structure:", response);
@@ -77,44 +84,53 @@ const EmployeesList = () => {
       } catch (logError) {
         console.error("Error logging failed:", logError);
       }
-      
+
       // More detailed error handling
       let errorMessage = "Failed to fetch employees";
       let showLogoutPrompt = false;
-      
+
       if (error.response) {
+        // Declare responseData outside conditional blocks to avoid ReferenceError
+        const responseData = error.response.data || {};
+
         if (error.response.status === 401) {
           errorMessage = "Unauthorized. Please log out and log back in.";
           showLogoutPrompt = true;
         } else if (error.response.status === 403) {
-          const responseData = error.response.data || {};
           const details = responseData.details || "";
           const debug = responseData.debug || {};
           const userInfo = JSON.parse(localStorage.getItem("user") || "{}");
-          
+
           errorMessage = `Access denied. Admin role required. ${details}`;
           showLogoutPrompt = true;
-          
+
           console.error("403 Forbidden Details:");
           console.error("  - Your role in localStorage:", userInfo.role);
-          console.error("  - Your role in token:", debug.roleFromToken || "unknown");
+          console.error(
+            "  - Your role in token:",
+            debug.roleFromToken || "unknown"
+          );
           console.error("  - Required roles:", debug.allowedRoles || ["Admin"]);
           console.error("  - Full debug info:", JSON.stringify(debug, null, 2));
           console.error("  - Full user object:", localStorage.getItem("user"));
-          console.error("\n⚠️ SOLUTION: Please log out and log back in to refresh your token with the correct role.");
+          console.error(
+            "\n⚠️ SOLUTION: Please log out and log back in to refresh your token with the correct role."
+          );
         } else if (error.response.status === 500) {
           errorMessage = "Server error. Please try again later.";
         } else {
-          errorMessage = responseData.message || responseData.error || errorMessage;
+          errorMessage =
+            responseData.message || responseData.error || errorMessage;
         }
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       if (showLogoutPrompt) {
-        errorMessage += "\n\nPlease log out and log back in to refresh your authentication token.";
+        errorMessage +=
+          "\n\nPlease log out and log back in to refresh your authentication token.";
       }
-      
+
       toast.error(errorMessage, { duration: 7000 });
       setEmployees([]);
     } finally {
@@ -152,7 +168,14 @@ const EmployeesList = () => {
       <div className="page-content">
         <AdminSidebar />
         <main className="main-admin-content">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "20px",
+            }}
+          >
             <h1 className="page-title" style={{ margin: 0 }}>
               Employees
               <span className="title-underline"></span>
@@ -167,7 +190,7 @@ const EmployeesList = () => {
                 border: "none",
                 borderRadius: "4px",
                 cursor: loading ? "not-allowed" : "pointer",
-                fontSize: "14px"
+                fontSize: "14px",
               }}
             >
               {loading ? "Refreshing..." : "🔄 Refresh"}
@@ -175,7 +198,10 @@ const EmployeesList = () => {
           </div>
 
           {loading ? (
-            <div className="loading" style={{ textAlign: "center", padding: "40px", fontSize: "18px" }}>
+            <div
+              className="loading"
+              style={{ textAlign: "center", padding: "40px", fontSize: "18px" }}
+            >
               Loading employees...
             </div>
           ) : (
@@ -196,11 +222,23 @@ const EmployeesList = () => {
                 <tbody>
                   {employees.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="empty-message" style={{ textAlign: "center", padding: "40px", fontSize: "16px", color: "#666" }}>
+                      <td
+                        colSpan="8"
+                        className="empty-message"
+                        style={{
+                          textAlign: "center",
+                          padding: "40px",
+                          fontSize: "16px",
+                          color: "#666",
+                        }}
+                      >
                         <div>
-                          <p style={{ marginBottom: "10px" }}>No employees found in the database.</p>
+                          <p style={{ marginBottom: "10px" }}>
+                            No employees found in the database.
+                          </p>
                           <p style={{ fontSize: "14px", color: "#999" }}>
-                            Click "Add employee" in the sidebar to add your first employee.
+                            Click "Add employee" in the sidebar to add your
+                            first employee.
                           </p>
                         </div>
                       </td>

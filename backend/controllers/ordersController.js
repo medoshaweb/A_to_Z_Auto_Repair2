@@ -282,20 +282,47 @@ const updateOrder = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Employees can only update status
+    // Employees can update status and price (total_amount)
     if (role === "Employee") {
-      if (!status) {
+      if (!status && price === undefined) {
         await connection.rollback();
         return res
           .status(403)
-          .json({ message: "Employees can only update order status" });
+          .json({ message: "Employees can update order status and price" });
       }
 
+      // Build update query for employees (status, price, completion_note)
+      const updates = [];
+      const values = [];
+      
+      if (status !== undefined) {
+        updates.push("status = ?");
+        values.push(status);
+        // Handle completed_at timestamp when status is set to Completed
+        if (status === "Completed") {
+          updates.push("completed_at = NOW()");
+        }
+      }
+      
+      if (price !== undefined) {
+        updates.push("total_amount = ?");
+        values.push(price);
+      }
+      
+      if (completion_note !== undefined) {
+        updates.push("completion_note = ?");
+        values.push(completion_note || existing[0].completion_note);
+      }
+      
+      if (updates.length === 0) {
+        await connection.rollback();
+        return res.status(400).json({ message: "No valid fields to update" });
+      }
+      
+      values.push(id);
       await connection.execute(
-        `UPDATE orders 
-         SET status = ?, completion_note = ?, completed_at = CASE WHEN ? = 'Completed' THEN NOW() ELSE completed_at END
-         WHERE id = ?`,
-        [status, completion_note || existing[0].completion_note, status, id]
+        `UPDATE orders SET ${updates.join(", ")} WHERE id = ?`,
+        values
       );
     } else {
       // Admin / Manager can edit full order

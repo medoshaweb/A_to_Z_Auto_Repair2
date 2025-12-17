@@ -1,13 +1,14 @@
-import axios from 'axios';
+import axios from "axios";
 
 // Get API base URL from environment variable or use default
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 // Create axios instance with default config
 const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   timeout: 10000, // 10 seconds timeout
 });
@@ -16,22 +17,27 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // Get tokens from localStorage
-    const token = localStorage.getItem('token');
-    const customerToken = localStorage.getItem('customerToken');
+    const token = localStorage.getItem("token");
+    const customerToken = localStorage.getItem("customerToken");
 
     // Determine which token to use based on the route
-    const url = config.url || '';
-    const method = (config.method || '').toLowerCase();
-    
+    const url = config.url || "";
+    const method = (config.method || "").toLowerCase();
+
     // Check if this is a customer route that requires customerToken
     // Pattern: /customers/:id/vehicles or /customers/:id/orders
-    const isCustomerSpecificRoute = /\/customers\/\d+\/(vehicles|orders)/.test(url);
-    const isCustomerOrderCreate = url === '/orders' && method === 'post';
-    const isRecommendationRoute = url.includes('/recommendations');
-    const isChatbotRoute = url.includes('/chatbot');
-    
-    const needsCustomerToken = isCustomerSpecificRoute || isCustomerOrderCreate || 
-                               isRecommendationRoute || isChatbotRoute;
+    const isCustomerSpecificRoute = /\/customers\/\d+\/(vehicles|orders)/.test(
+      url
+    );
+    const isCustomerOrderCreate = url === "/orders" && method === "post";
+    const isRecommendationRoute = url.includes("/recommendations");
+    const isChatbotRoute = url.includes("/chatbot");
+
+    const needsCustomerToken =
+      isCustomerSpecificRoute ||
+      isCustomerOrderCreate ||
+      isRecommendationRoute ||
+      isChatbotRoute;
 
     // Use appropriate token based on route
     if (needsCustomerToken) {
@@ -39,7 +45,10 @@ api.interceptors.request.use(
         config.headers.Authorization = `Bearer ${customerToken}`;
       } else {
         // Don't add token if customerToken is required but not available
-        console.warn('Customer route requires customerToken but none found:', url);
+        console.warn(
+          "Customer route requires customerToken but none found:",
+          url
+        );
       }
     } else if (token) {
       // Use admin token for admin routes
@@ -67,37 +76,39 @@ api.interceptors.response.use(
       // Server responded with error status
       const { status, data } = error.response;
 
-      // Handle 401 Unauthorized - Clear tokens and redirect to login
+      // Handle 401 Unauthorized - Don't clear tokens immediately
+      // Let the component decide what to do based on the error
+      // This prevents race conditions where AdminPrivateRoute redirects before component can handle error
       if (status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('customerToken');
-        localStorage.removeItem('customer');
-        
-        // Redirect to appropriate login page
-        if (window.location.pathname.startsWith('/admin')) {
-          window.location.href = '/admin/login';
-        } else if (window.location.pathname.startsWith('/customer')) {
-          window.location.href = '/customer/login';
-        }
+        console.error("401 Unauthorized - Token may be invalid or expired");
+        console.error("Request URL:", error.config?.url);
+        console.error("Request method:", error.config?.method);
+        // Don't clear tokens here - let the component handle it
+        // This prevents AdminPrivateRoute from redirecting before error is shown
       }
 
-      // Return error with message
-      return Promise.reject({
-        message: data?.message || 'An error occurred',
-        status,
-        data: data,
-      });
+      // Return error with original structure preserved
+      // This allows components to access error.response.status, error.response.data, etc.
+      const errorWithResponse = {
+        ...error,
+        response: {
+          ...error.response,
+          status,
+          data: data,
+        },
+        message: data?.message || error.message || "An error occurred",
+      };
+      return Promise.reject(errorWithResponse);
     } else if (error.request) {
       // Request was made but no response received
       return Promise.reject({
-        message: 'Network error. Please check your connection.',
+        message: "Network error. Please check your connection.",
         status: null,
       });
     } else {
       // Something else happened
       return Promise.reject({
-        message: error.message || 'An unexpected error occurred',
+        message: error.message || "An unexpected error occurred",
         status: null,
       });
     }
@@ -105,4 +116,3 @@ api.interceptors.response.use(
 );
 
 export default api;
-

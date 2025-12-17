@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { customersAPI, recommendationsAPI } from "../api";
 import { useSocket } from "../contexts/SocketContext";
+import PaymentModal from "../components/PaymentModal";
 import toast from "react-hot-toast";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -22,6 +23,8 @@ const CustomerDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
     fetchCustomerData();
@@ -81,6 +84,25 @@ const CustomerDashboard = () => {
     localStorage.removeItem("customerToken");
     localStorage.removeItem("customer");
     navigate("/");
+  };
+
+  const handlePaymentClick = (order) => {
+    if (order.payment_status === 'paid') {
+      toast.info('This order has already been paid');
+      return;
+    }
+    if (!order.total_amount || order.total_amount <= 0) {
+      toast.error('Order amount must be greater than $0.00');
+      return;
+    }
+    setSelectedOrder(order);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    fetchCustomerData(); // Refresh the orders list
+    setShowPaymentModal(false);
+    setSelectedOrder(null);
   };
 
   if (loading) {
@@ -211,11 +233,29 @@ const CustomerDashboard = () => {
                     <div key={order.id} className="order-card">
                       <div className="order-header">
                         <h3>Order #{order.id}</h3>
-                        <span
-                          className={`status-badge status-${order.status.toLowerCase()}`}
-                        >
-                          {order.status}
-                        </span>
+                        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                          <span
+                            className={`status-badge status-${order.status.toLowerCase()}`}
+                          >
+                            {order.status}
+                          </span>
+                          {order.payment_status && (
+                            <span
+                              className={`payment-badge payment-${order.payment_status || 'pending'}`}
+                              style={{
+                                display: "inline-block",
+                                padding: "4px 8px",
+                                borderRadius: "4px",
+                                fontSize: "11px",
+                                fontWeight: "600",
+                                backgroundColor: order.payment_status === 'paid' ? '#4caf50' : '#ffc107',
+                                color: order.payment_status === 'paid' ? '#ffffff' : '#000000',
+                              }}
+                            >
+                              {order.payment_status === 'paid' ? '✓ Paid' : '⏳ Pending'}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       {order.make && order.model && (
                         <p>
@@ -235,6 +275,62 @@ const CustomerDashboard = () => {
                           <strong>Description:</strong> {order.description}
                         </p>
                       )}
+                      {/* Action Buttons */}
+                      <div style={{ marginTop: "15px", display: "flex", gap: "10px" }}>
+                        {order.payment_status !== 'paid' && order.total_amount > 0 && (
+                          <button
+                            onClick={() => handlePaymentClick(order)}
+                            style={{
+                              backgroundColor: "#28a745",
+                              color: "#ffffff",
+                              border: "none",
+                              padding: "12px 24px",
+                              borderRadius: "6px",
+                              fontSize: "16px",
+                              fontWeight: "600",
+                              cursor: "pointer",
+                              flex: 1,
+                              transition: "background-color 0.3s ease",
+                            }}
+                            onMouseOver={(e) => e.target.style.backgroundColor = "#218838"}
+                            onMouseOut={(e) => e.target.style.backgroundColor = "#28a745"}
+                          >
+                            💳 Pay Now
+                          </button>
+                        )}
+                        <button
+                          onClick={() => navigate(`/admin/orders/${order.id}`)}
+                          style={{
+                            backgroundColor: "#1e3a8a",
+                            color: "#ffffff",
+                            border: "none",
+                            padding: "12px 24px",
+                            borderRadius: "6px",
+                            fontSize: "16px",
+                            fontWeight: "600",
+                            cursor: "pointer",
+                            flex: order.payment_status !== 'paid' && order.total_amount > 0 ? 1 : "auto",
+                            transition: "background-color 0.3s ease",
+                          }}
+                          onMouseOver={(e) => e.target.style.backgroundColor = "#1e40af"}
+                          onMouseOut={(e) => e.target.style.backgroundColor = "#1e3a8a"}
+                        >
+                          View Details
+                        </button>
+                      </div>
+                      {order.payment_status === 'paid' && (
+                        <div style={{ 
+                          marginTop: "15px", 
+                          padding: "10px", 
+                          backgroundColor: "#d4edda", 
+                          borderRadius: "6px",
+                          textAlign: "center",
+                          color: "#155724",
+                          fontWeight: "600"
+                        }}>
+                          ✓ Payment Completed
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -244,6 +340,20 @@ const CustomerDashboard = () => {
         </div>
       </main>
       <Footer />
+
+      {/* Payment Modal */}
+      {selectedOrder && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedOrder(null);
+          }}
+          orderId={selectedOrder.id}
+          amount={selectedOrder.total_amount || 0}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
     </div>
   );
 };

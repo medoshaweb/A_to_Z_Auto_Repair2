@@ -1,12 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
+const authenticateToken = require("../middleware/auth");
+const authorizeRoles = require("../middleware/authorizeRoles");
 
 // Login route
 router.post("/login", authController.login);
 
-// Register route
-router.post("/register", authController.register);
+// Register route - ADMIN ONLY
+router.post("/register", authenticateToken, authorizeRoles("Admin"), authController.register);
 
 // Forgot password - Request reset
 router.post("/forgot-password", authController.forgotPassword);

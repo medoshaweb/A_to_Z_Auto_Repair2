@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ordersAPI } from "../api";
 import AdminSidebar from "../components/AdminSidebar";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import PaymentModal from "../components/PaymentModal";
 import toast from "react-hot-toast";
 import "./OrdersList.css";
 
 const OrdersList = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -62,6 +66,25 @@ const OrdersList = () => {
     return 'status-received';
   };
 
+  const handlePaymentClick = (order) => {
+    if (order.payment_status === 'paid') {
+      toast.info('This order has already been paid');
+      return;
+    }
+    if (!order.total_amount || order.total_amount <= 0) {
+      toast.error('Order amount must be greater than $0.00');
+      return;
+    }
+    setSelectedOrder(order);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    fetchOrders(); // Refresh the orders list
+    setShowPaymentModal(false);
+    setSelectedOrder(null);
+  };
+
   return (
     <div className="orders-list-page">
       <Header />
@@ -84,16 +107,18 @@ const OrdersList = () => {
                     <th>Customer</th>
                     <th>Vehicle</th>
                     <th>Order Date</th>
+                    <th>Amount</th>
+                    <th>Payment Status</th>
                     <th>Received by</th>
                     <th>Assigned To</th>
                     <th>Order status</th>
-                    <th>View/Edit</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orders.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="no-data">No orders found</td>
+                      <td colSpan="10" className="no-data">No orders found</td>
                     </tr>
                   ) : (
                     orders.map((order) => (
@@ -125,6 +150,14 @@ const OrdersList = () => {
                           )}
                         </td>
                         <td>{formatDate(order.created_at)}</td>
+                        <td>
+                          <strong>${parseFloat(order.total_amount || 0).toFixed(2)}</strong>
+                        </td>
+                        <td>
+                          <span className={`payment-badge payment-${order.payment_status || 'pending'}`}>
+                            {order.payment_status === 'paid' ? '✓ Paid' : '⏳ Pending'}
+                          </span>
+                        </td>
                         <td>{order.received_by || 'Admin'}</td>
                         <td>
                           {order.assigned_first_name
@@ -143,6 +176,23 @@ const OrdersList = () => {
                           <Link to={`/admin/orders/${order.id}/edit`} className="edit-icon" title="Edit">
                             ✏️
                           </Link>
+                          {order.payment_status !== 'paid' && order.total_amount > 0 && (
+                            <button
+                              onClick={() => handlePaymentClick(order)}
+                              className="payment-icon"
+                              title="Process Payment"
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '18px',
+                                padding: '5px',
+                                marginLeft: '5px'
+                              }}
+                            >
+                              💳
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -154,6 +204,20 @@ const OrdersList = () => {
         </main>
       </div>
       <Footer />
+
+      {/* Payment Modal */}
+      {selectedOrder && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedOrder(null);
+          }}
+          orderId={selectedOrder.id}
+          amount={selectedOrder.total_amount || 0}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
     </div>
   );
 };

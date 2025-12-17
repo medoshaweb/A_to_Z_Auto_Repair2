@@ -14,6 +14,19 @@ export const adminAuthAPI = {
     return response.data;
   },
 
+  // Admin register (create new admin/employee account) - ADMIN ONLY
+  register: async (first_name, last_name, email, password, role = "Employee", phone = "") => {
+    const response = await api.post('/auth/register', {
+      first_name,
+      last_name,
+      email,
+      password,
+      role,
+      phone: phone || null,
+    });
+    return response.data;
+  },
+
   // Forgot password
   forgotPassword: async (email) => {
     const response = await api.post('/auth/forgot-password', { email });
